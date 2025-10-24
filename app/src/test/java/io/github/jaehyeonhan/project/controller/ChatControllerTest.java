@@ -37,4 +37,16 @@ class ChatControllerTest {
         resultActions.andExpect(status().isCreated())
                 .andExpect(jsonPath("$.chatId").value("1234"));
     }
+
+    @Test
+    void joinChat_returns200() throws Exception {
+        // given
+        String chatId = "1234";
+
+        // when
+        ResultActions resultActions = mockMvc.perform(post("/api/chats/" + chatId));
+
+        // then
+        resultActions.andExpect(status().isOk());
+    }
 }
