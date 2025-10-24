@@ -2,6 +2,7 @@ package io.github.jaehyeonhan.project.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.jaehyeonhan.project.controller.dto.request.CreateChatRequest;
+import io.github.jaehyeonhan.project.controller.dto.request.SendMessageRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -45,6 +46,21 @@ class ChatControllerTest {
 
         // when
         ResultActions resultActions = mockMvc.perform(post("/api/chats/" + chatId));
+
+        // then
+        resultActions.andExpect(status().isOk());
+    }
+
+    @Test
+    void sendMessage_returns200() throws Exception {
+        // given
+        String chatId = "1234";
+        SendMessageRequest request = new SendMessageRequest("test message");
+
+        // when
+        ResultActions resultActions = mockMvc.perform(post("/api/chats/" + chatId + "/messages")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)));
 
         // then
         resultActions.andExpect(status().isOk());

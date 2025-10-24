@@ -1,6 +1,7 @@
 package io.github.jaehyeonhan.project.controller;
 
 import io.github.jaehyeonhan.project.controller.dto.request.CreateChatRequest;
+import io.github.jaehyeonhan.project.controller.dto.request.SendMessageRequest;
 import io.github.jaehyeonhan.project.controller.dto.response.ChatCreatedResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,11 @@ public class ChatController {
 
     @PostMapping("/{chatId}")
     public ResponseEntity<Void> joinChat(@PathVariable String chatId) {
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{chatId}/messages")
+    public ResponseEntity<Void> sendMessage(@RequestBody SendMessageRequest request) {
         return ResponseEntity.ok().build();
     }
 }
