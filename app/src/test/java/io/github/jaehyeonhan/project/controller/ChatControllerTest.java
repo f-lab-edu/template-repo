@@ -3,6 +3,7 @@ package io.github.jaehyeonhan.project.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.jaehyeonhan.project.controller.dto.request.CreateChatRequest;
 import io.github.jaehyeonhan.project.controller.dto.request.SendMessageRequest;
+import io.github.jaehyeonhan.project.controller.dto.response.MessageResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -10,7 +11,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -64,5 +68,22 @@ class ChatControllerTest {
 
         // then
         resultActions.andExpect(status().isOk());
+    }
+
+    @Test
+    void getNewMessageList_returns200_with_testMessage() throws Exception {
+        // given
+        String chatId = "1234";
+        String lastRead = "0";
+
+        // when
+        ResultActions resultActions = mockMvc.perform(get("/api/chats/" + chatId + "/messages")
+                .param("lastRead", lastRead));
+
+        // then
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.messages[0].id").value(1))
+                .andExpect(jsonPath("$.messages[0].content").value("this is a message"));
+
     }
 }
