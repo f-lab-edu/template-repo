@@ -1,13 +1,11 @@
 package io.github.jaehyeonhan.project.controller.dto.request;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
+@Getter
 public class CreateChatRequest {
+
     private final String title;
-
-    public CreateChatRequest(String title) {
-        this.title = title;
-    }
-
-    public String getTitle() {
-        return this.title;
-    }
 }
