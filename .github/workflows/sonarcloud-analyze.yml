@@ -7,6 +7,7 @@ on:
 
 env:
   CACHED_DEPENDENCIES_PATHS: '**/node_modules'
+  ORIGINAL_REPOSITORY_NAME: 'template-repo'
 
 jobs:
   CodeAnalyze:
@@ -19,9 +20,9 @@ jobs:
 
       - name: Set SonarCloud Project Key
         run: |
-          REPO_NAME=$(echo $GITHUB_REPOSITORY | cut -d '/' -f 2)
+          REPO_NAME=${ORIGINAL_REPOSITORY_NAME}
           ORG_NAME=$(echo $GITHUB_REPOSITORY | cut -d '/' -f 1)
-          SONAR_PROJECT_KEY="${ORG_NAME}_${REPO_NAME}"
+          SONAR_PROJECT_KEY="${ORG_NAME}_${ORIGINAL_REPOSITORY_NAME}"
           echo "SONAR_PROJECT_KEY=$SONAR_PROJECT_KEY" >> $GITHUB_ENV 
 
       - name: Set up JDK
