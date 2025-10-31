@@ -2,10 +2,12 @@ package io.github.jaehyeonhan.project.service;
 
 import io.github.jaehyeonhan.project.entity.Chat;
 import io.github.jaehyeonhan.project.entity.Participation;
+import io.github.jaehyeonhan.project.exception.ChatNotFoundException;
 import io.github.jaehyeonhan.project.repository.ChatRepository;
 import io.github.jaehyeonhan.project.repository.ParticipationRepository;
 import io.github.jaehyeonhan.project.service.dto.MessageDto;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +32,21 @@ public class ChatService {
     }
 
     public void join(String userId, String chatId) {
+        requireChat(chatId);
 
+        // 중복 참가 요청은 바로 반환
+        Optional<Participation> optParticipation = participationRepository.findByUserIdAndChatId(userId, chatId);
+        if(optParticipation.isPresent()) {
+            return;
+        }
+
+        String participationId = idGenerator.generate();
+        Participation participation = new Participation(participationId, userId, chatId);
+        participationRepository.save(participation);
+    }
+
+    private void requireChat(String chatId) {
+        chatRepository.findById(chatId).orElseThrow(() -> new ChatNotFoundException("채팅이 없습니다."));
     }
 
     public void sendMessage(String userId, String chatId, String content) {
