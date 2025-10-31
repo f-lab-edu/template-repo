@@ -24,9 +24,7 @@ public class ChatService {
         Chat chat = new Chat(chatId, userId, title);
         chatRepository.save(chat);
 
-        String participationId = idGenerator.generate();
-        Participation participation = new Participation(participationId, userId, chatId);
-        participationRepository.save(participation);
+        join(userId, chatId);
 
         return chat.getId();
     }
