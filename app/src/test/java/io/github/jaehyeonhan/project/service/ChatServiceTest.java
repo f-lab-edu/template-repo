@@ -16,13 +16,15 @@ import io.github.jaehyeonhan.project.repository.MemoryParticipationRepository;
 import io.github.jaehyeonhan.project.repository.MessageRepository;
 import io.github.jaehyeonhan.project.repository.ParticipationRepository;
 import io.github.jaehyeonhan.project.service.dto.MessageDto;
+import java.time.LocalDateTime;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class ChatServiceTest {
 
-    private static final String FIRST_READ = "0";
+    private static final LocalDateTime BEGINNING_OF_TIME = LocalDateTime.MIN;
     private static final String USER_ID = "1";
     private static final String EXISTENT_CHAT_ID = "22";
     private static final String NON_EXISTENT_CHAT_ID = "9999999";
@@ -33,6 +35,13 @@ class ChatServiceTest {
     private final MessageRepository messageRepository = new MemoryMessageRepository();
 
     private final ChatService chatService = new ChatService(chatRepository, participationRepository, messageRepository, new IdGenerator());
+
+    @BeforeEach
+    void clearRepositories() {
+        chatRepository.deleteAll();
+        participationRepository.deleteAll();
+        messageRepository.deleteAll();
+    }
 
     /*
     테스트 메소드 명명 스타일
@@ -98,8 +107,8 @@ class ChatServiceTest {
         chatService.sendMessage(USER_ID, EXISTENT_CHAT_ID, "content");
 
         // then
-        List<Message> messageList = messageRepository.findByUserIdAndChatId(USER_ID,
-            EXISTENT_CHAT_ID);
+        List<Message> messageList = messageRepository.findMessagesAfterLastRead(USER_ID,
+            EXISTENT_CHAT_ID, BEGINNING_OF_TIME);
         assertThat(messageList).isNotEmpty();
     }
 
@@ -126,8 +135,8 @@ class ChatServiceTest {
         messageRepository.save(message);
 
         // when
-        List<MessageDto> newMessageList = chatService.getNewMessageList(USER_ID, EXISTENT_CHAT_ID,
-            FIRST_READ);
+        List<MessageDto> newMessageList = chatService.getMessageList(USER_ID, EXISTENT_CHAT_ID,
+            BEGINNING_OF_TIME);
 
         // then
         assertThat(newMessageList).anyMatch(d -> d.getId().equals(messageId));
@@ -140,7 +149,8 @@ class ChatServiceTest {
         createChat();
 
         // when, then
-        assertThatThrownBy(() -> chatService.getNewMessageList(USER_ID, NON_EXISTENT_CHAT_ID, FIRST_READ))
+        assertThatThrownBy(() -> chatService.getMessageList(USER_ID, NON_EXISTENT_CHAT_ID,
+            BEGINNING_OF_TIME))
             .isInstanceOf(NotParticipatingException.class);
     }
 

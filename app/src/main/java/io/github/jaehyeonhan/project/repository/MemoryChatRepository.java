@@ -20,4 +20,9 @@ public class MemoryChatRepository implements ChatRepository {
     public Optional<Chat> findById(String chatId) {
         return Optional.ofNullable(map.get(chatId));
     }
+
+    @Override
+    public void deleteAll() {
+        map.clear();
+    }
 }

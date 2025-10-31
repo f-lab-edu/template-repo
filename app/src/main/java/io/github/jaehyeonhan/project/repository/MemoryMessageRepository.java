@@ -1,6 +1,7 @@
 package io.github.jaehyeonhan.project.repository;
 
 import io.github.jaehyeonhan.project.entity.Message;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,9 +17,15 @@ public class MemoryMessageRepository implements MessageRepository {
     }
 
     @Override
-    public List<Message> findByUserIdAndChatId(String userId, String chatId) {
+    public List<Message> findMessagesAfterLastRead(String userId, String chatId, LocalDateTime lastRead) {
         return map.values().stream()
             .filter(m -> m.getUserId().equals(userId) && Objects.equals(m.getChatId(), chatId))
+            .filter(m -> m.getCreatedAt().isAfter(lastRead))
             .toList();
+    }
+
+    @Override
+    public void deleteAll() {
+        map.clear();
     }
 }

@@ -22,4 +22,9 @@ public class MemoryParticipationRepository implements ParticipationRepository {
                   .filter(p -> p.getUserId().equals(userId) && p.getChatId().equals(chatId))
                   .findFirst();
     }
+
+    @Override
+    public void deleteAll() {
+        map.clear();
+    }
 }

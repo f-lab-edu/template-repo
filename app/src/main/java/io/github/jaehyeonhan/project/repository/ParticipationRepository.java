@@ -8,4 +8,6 @@ public interface ParticipationRepository {
     Participation save(Participation participation);
 
     Optional<Participation> findByUserIdAndChatId(String userId, String chatId);
+
+    void deleteAll();
 }

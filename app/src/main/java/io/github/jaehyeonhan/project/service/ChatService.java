@@ -9,6 +9,7 @@ import io.github.jaehyeonhan.project.repository.ChatRepository;
 import io.github.jaehyeonhan.project.repository.MessageRepository;
 import io.github.jaehyeonhan.project.repository.ParticipationRepository;
 import io.github.jaehyeonhan.project.service.dto.MessageDto;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +38,9 @@ public class ChatService {
         requireChat(chatId);
 
         // 중복 참가 요청은 바로 반환
-        Optional<Participation> optParticipation = participationRepository.findByUserIdAndChatId(userId, chatId);
-        if(optParticipation.isPresent()) {
+        Optional<Participation> optParticipation = participationRepository.findByUserIdAndChatId(
+            userId, chatId);
+        if (optParticipation.isPresent()) {
             return;
         }
 
@@ -64,7 +66,11 @@ public class ChatService {
                                .orElseThrow(() -> new NotParticipatingException("참여 중인 채팅이 아닙니다."));
     }
 
-    public List<MessageDto> getNewMessageList(String userId, String chatId, String lastRead) {
-        return null;
+    public List<MessageDto> getMessageList(String userId, String chatId, LocalDateTime lastRead) {
+        requireParticipation(userId, chatId);
+
+        return messageRepository.findMessagesAfterLastRead(userId, chatId, lastRead).stream()
+                                .map(MessageDto::from)
+                                .toList();
     }
 }

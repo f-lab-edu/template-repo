@@ -8,4 +8,6 @@ public interface ChatRepository {
     Chat save(Chat chat);
 
     Optional<Chat> findById(String chatId);
+
+    void deleteAll();
 }

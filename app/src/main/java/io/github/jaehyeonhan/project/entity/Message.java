@@ -11,15 +11,15 @@ public class Message {
     private final String chatId;
     private final String userId;
 
-    private final String message;
+    private final String content;
 
     private final LocalDateTime createdAt;
 
-    public Message(String id, String chatId, String userId, String message) {
+    public Message(String id, String chatId, String userId, String content) {
         this.id = id;
         this.chatId = chatId;
         this.userId = userId;
-        this.message = message;
+        this.content = content;
 
         this.createdAt = LocalDateTime.now();
     }
