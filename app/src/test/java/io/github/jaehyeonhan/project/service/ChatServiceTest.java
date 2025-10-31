@@ -32,7 +32,7 @@ class ChatServiceTest {
     private final ParticipationRepository participationRepository = new MemoryParticipationRepository();
     private final MessageRepository messageRepository = new MemoryMessageRepository();
 
-    private final ChatService chatService = new ChatService(chatRepository, participationRepository);
+    private final ChatService chatService = new ChatService(chatRepository, participationRepository, new IdGenerator());
 
     /*
     테스트 메소드 명명 스타일

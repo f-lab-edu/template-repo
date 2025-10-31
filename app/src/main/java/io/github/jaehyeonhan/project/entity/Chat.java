@@ -1,10 +1,9 @@
 package io.github.jaehyeonhan.project.entity;
 
-import lombok.AllArgsConstructor;
+import io.github.jaehyeonhan.project.exception.InvalidChatTitleException;
 import lombok.Getter;
 import lombok.Setter;
 
-@AllArgsConstructor
 @Getter
 public class Chat {
 
@@ -14,4 +13,12 @@ public class Chat {
     @Setter
     private String title;
 
+    public Chat(String id, String creatorId, String title) {
+        this.id = id;
+        this.creatorId = creatorId;
+
+        if(title.isBlank()) {
+            throw new InvalidChatTitleException("Title cannot be empty");
+        }
+    }
 }

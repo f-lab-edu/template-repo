@@ -1,5 +1,7 @@
 package io.github.jaehyeonhan.project.service;
 
+import io.github.jaehyeonhan.project.entity.Chat;
+import io.github.jaehyeonhan.project.entity.Participation;
 import io.github.jaehyeonhan.project.repository.ChatRepository;
 import io.github.jaehyeonhan.project.repository.ParticipationRepository;
 import io.github.jaehyeonhan.project.service.dto.MessageDto;
@@ -13,9 +15,18 @@ public class ChatService {
 
     private final ChatRepository chatRepository;
     private final ParticipationRepository participationRepository;
+    private final IdGenerator idGenerator;
 
     public String create(String userId, String title) {
-        return null;
+        String chatId = idGenerator.generate();
+        Chat chat = new Chat(chatId, userId, title);
+        chatRepository.save(chat);
+
+        String participationId = idGenerator.generate();
+        Participation participation = new Participation(participationId, userId, chatId);
+        participationRepository.save(participation);
+
+        return chat.getId();
     }
 
     public void join(String userId, String chatId) {
