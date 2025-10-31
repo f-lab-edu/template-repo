@@ -32,7 +32,7 @@ class ChatServiceTest {
     private final ParticipationRepository participationRepository = new MemoryParticipationRepository();
     private final MessageRepository messageRepository = new MemoryMessageRepository();
 
-    private final ChatService chatService = new ChatService(chatRepository, participationRepository, new IdGenerator());
+    private final ChatService chatService = new ChatService(chatRepository, participationRepository, messageRepository, new IdGenerator());
 
     /*
     테스트 메소드 명명 스타일
@@ -122,7 +122,7 @@ class ChatServiceTest {
         createParticipation();
 
         String messageId = "4444";
-        Message message = new Message(messageId, EXISTENT_CHAT_ID, USER_ID);
+        Message message = new Message(messageId, EXISTENT_CHAT_ID, USER_ID, "content");
         messageRepository.save(message);
 
         // when
@@ -150,7 +150,7 @@ class ChatServiceTest {
     }
 
     private void createParticipation() {
-        Participation participation = new Participation(EXISTENT_CHAT_ID, USER_ID, PARTICIPATION_ID);
+        Participation participation = new Participation(PARTICIPATION_ID, USER_ID, EXISTENT_CHAT_ID);
         participationRepository.save(participation);
     }
 }

@@ -1,9 +1,12 @@
 package io.github.jaehyeonhan.project.service;
 
 import io.github.jaehyeonhan.project.entity.Chat;
+import io.github.jaehyeonhan.project.entity.Message;
 import io.github.jaehyeonhan.project.entity.Participation;
 import io.github.jaehyeonhan.project.exception.ChatNotFoundException;
+import io.github.jaehyeonhan.project.exception.NotParticipatingException;
 import io.github.jaehyeonhan.project.repository.ChatRepository;
+import io.github.jaehyeonhan.project.repository.MessageRepository;
 import io.github.jaehyeonhan.project.repository.ParticipationRepository;
 import io.github.jaehyeonhan.project.service.dto.MessageDto;
 import java.util.List;
@@ -17,6 +20,7 @@ public class ChatService {
 
     private final ChatRepository chatRepository;
     private final ParticipationRepository participationRepository;
+    private final MessageRepository messageRepository;
     private final IdGenerator idGenerator;
 
     public String create(String userId, String title) {
@@ -48,7 +52,16 @@ public class ChatService {
     }
 
     public void sendMessage(String userId, String chatId, String content) {
+        requireParticipation(userId, chatId);
 
+        String messageId = idGenerator.generate();
+        Message message = new Message(messageId, chatId, userId, content);
+        messageRepository.save(message);
+    }
+
+    private void requireParticipation(String userId, String chatId) {
+        participationRepository.findByUserIdAndChatId(userId, chatId)
+                               .orElseThrow(() -> new NotParticipatingException("참여 중인 채팅이 아닙니다."));
     }
 
     public List<MessageDto> getNewMessageList(String userId, String chatId, String lastRead) {
