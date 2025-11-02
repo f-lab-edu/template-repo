@@ -1,11 +1,12 @@
 package io.github.jaehyeonhan.project.controller.dto.request;
 
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public class CreateChatRequest {
+public class GetNewMessageRequest {
     private final String userId;
-    private final String title;
+    private final LocalDateTime lastRead;
 }
