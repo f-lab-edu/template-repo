@@ -1,85 +1,102 @@
 package io.github.jaehyeonhan.project.controller;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.jaehyeonhan.project.controller.dto.request.CreateChatRequest;
+import io.github.jaehyeonhan.project.controller.dto.request.JoinChatRequest;
 import io.github.jaehyeonhan.project.controller.dto.request.SendMessageRequest;
+import io.github.jaehyeonhan.project.controller.dto.response.ChatCreatedResponse;
+import io.github.jaehyeonhan.project.controller.dto.response.MessageListResponse;
+import io.github.jaehyeonhan.project.service.ChatService;
+import java.net.URI;
+import java.util.Objects;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.util.UriComponentsBuilder;
 
-@WebMvcTest
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class ChatControllerTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    private TestRestTemplate restTemplate;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private ChatService chatService;
 
     @Test
-    void createChat_returns201_with_chatId() throws Exception {
+    @DisplayName("채팅 생성 시 201 상태코드와 chatId 문자열을 반환한다.")
+    void given_createChatRequest_when_createChat_then_return201WithChatId() {
         // given
-        CreateChatRequest request = new CreateChatRequest("1234");
+        CreateChatRequest request = new CreateChatRequest("user1", "title");
 
         // when
-        ResultActions resultActions = mockMvc.perform(post("/api/chats")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)));
+        ResponseEntity<ChatCreatedResponse> response = restTemplate.postForEntity(
+            "/api/chats", request, ChatCreatedResponse.class);
 
         // then
-        resultActions.andExpect(status().isCreated())
-                .andExpect(jsonPath("$.chatId").value("1234"));
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(Objects.requireNonNull(response.getBody()).getChatId()).isNotEmpty();
     }
 
     @Test
-    void joinChat_returns200() throws Exception {
+    @DisplayName("채팅 정상 참가 시 200 상태코드를 반환한다.")
+    void given_chatExists_when_join_returns200() {
         // given
-        String chatId = "1234";
+        String chatId = chatService.createChat("user1", "title");
+        JoinChatRequest request = new JoinChatRequest("user2");
 
         // when
-        ResultActions resultActions = mockMvc.perform(post("/api/chats/" + chatId));
+        ResponseEntity<Void> response = restTemplate.postForEntity(
+            "/api/chats/" + chatId + "/participants", request, Void.class);
 
         // then
-        resultActions.andExpect(status().isOk());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
-    void sendMessage_returns200() throws Exception {
+    @DisplayName("참가한 채팅에 메시지를 보낼 시 200 상태코드를 반환한다.")
+    void given_chatExistsAndParticipating_when_sendMessage_return200() {
         // given
-        String chatId = "1234";
-        SendMessageRequest request = new SendMessageRequest("test message");
+        String chatId = chatService.createChat("user1", "title");
+        SendMessageRequest request = new SendMessageRequest("user1", "message");
 
         // when
-        ResultActions resultActions = mockMvc.perform(post("/api/chats/" + chatId + "/messages")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)));
+        ResponseEntity<Void> response = restTemplate.postForEntity(
+            "/api/chats/" + chatId + "/messages", request, Void.class);
 
         // then
-        resultActions.andExpect(status().isOk());
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
-    void getNewMessageList_returns200_with_testMessage() throws Exception {
+    @DisplayName("참가한 채팅에 새 메시지가 있는 경우 200 상태코드와 메시지 목록을 반환한다.")
+    void given_participatingInChat_when_getNewMessageList_then_return200WithMessages() {
         // given
-        String chatId = "1234";
-        String lastRead = "0";
+        String chatId = chatService.createChat("user1", "title");
+        chatService.join("user2", chatId);
+        chatService.sendMessage("user1", chatId, "content");
+
+        String lastRead = "1970-01-01T00:00:00";
+
+        URI uri = UriComponentsBuilder
+            .fromUriString("/api/chats/" + chatId + "/messages")
+            .queryParam("userId", "user2")
+            .queryParam("lastRead", lastRead)
+            .build()
+            .toUri();
 
         // when
-        ResultActions resultActions = mockMvc.perform(get("/api/chats/" + chatId + "/messages")
-                .param("lastRead", lastRead));
+        ResponseEntity<MessageListResponse> response = restTemplate.getForEntity(uri,
+            MessageListResponse.class);
 
         // then
-        resultActions.andExpect(status().isOk())
-                .andExpect(jsonPath("$.messages[0].id").value(1))
-                .andExpect(jsonPath("$.messages[0].content").value("this is a message"));
-
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(Objects.requireNonNull(response.getBody()).getMessages().size()).isPositive();
     }
 }
