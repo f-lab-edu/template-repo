@@ -54,7 +54,7 @@ class ChatServiceTest {
         String title = "test";
 
         // when
-        String chatId = chatService.create(USER_ID, title);
+        String chatId = chatService.createChat(USER_ID, title);
 
         // then
         assertThat(chatId).isNotNull();
@@ -64,12 +64,12 @@ class ChatServiceTest {
 
     @Test
     @DisplayName("빈 제목으로 채팅 생성 시 예외가 발생한다.")
-    void given_emptyTitle_when_create_then_throwException() {
+    void given_emptyTitle_when_createChat_then_throwException() {
         // given
         String emptyTitle = "";
 
         // when, then
-        assertThatThrownBy(() -> chatService.create(USER_ID, emptyTitle))
+        assertThatThrownBy(() -> chatService.createChat(USER_ID, emptyTitle))
             .isInstanceOf(InvalidChatTitleException.class);
     }
 
@@ -84,6 +84,19 @@ class ChatServiceTest {
 
         // then
         assertThat(participationRepository.findByUserIdAndChatId(USER_ID, EXISTENT_CHAT_ID)).isNotNull();
+    }
+
+    @Test
+    @DisplayName("채팅에 중복으로 참여해도 예외가 발생하지 않는다.")
+    void given_chatExists_when_joinParticipatingChat_then_notThrowException() {
+        // given
+        createChat();
+
+        // when
+        chatService.join(USER_ID, EXISTENT_CHAT_ID);
+        chatService.join(USER_ID, EXISTENT_CHAT_ID);
+
+        // then
     }
 
     @Test

@@ -24,7 +24,7 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final IdGenerator idGenerator;
 
-    public String create(String userId, String title) {
+    public String createChat(String userId, String title) {
         String chatId = idGenerator.generate();
         Chat chat = new Chat(chatId, userId, title);
         chatRepository.save(chat);
