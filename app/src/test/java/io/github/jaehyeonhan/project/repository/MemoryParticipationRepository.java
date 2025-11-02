@@ -1,12 +1,12 @@
-package io.github.jaehyeonhan.project.service.repository;
+package io.github.jaehyeonhan.project.repository;
 
 import io.github.jaehyeonhan.project.entity.Participation;
-import org.springframework.stereotype.Repository;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public class MemoryParticipationRepository implements TestParticipationRepository {
 
     private final static Map<String, Participation> map = new HashMap<>();

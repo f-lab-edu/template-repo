@@ -9,11 +9,15 @@ import io.github.jaehyeonhan.project.entity.Participation;
 import io.github.jaehyeonhan.project.exception.ChatNotFoundException;
 import io.github.jaehyeonhan.project.exception.InvalidChatTitleException;
 import io.github.jaehyeonhan.project.exception.NotParticipatingException;
-import io.github.jaehyeonhan.project.service.repository.*;
+import io.github.jaehyeonhan.project.repository.MemoryChatRepository;
+import io.github.jaehyeonhan.project.repository.MemoryMessageRepository;
+import io.github.jaehyeonhan.project.repository.MemoryParticipationRepository;
+import io.github.jaehyeonhan.project.repository.TestChatRepository;
+import io.github.jaehyeonhan.project.repository.TestMessageRepository;
+import io.github.jaehyeonhan.project.repository.TestParticipationRepository;
 import io.github.jaehyeonhan.project.service.dto.MessageDto;
 import java.time.LocalDateTime;
 import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
