@@ -21,7 +21,7 @@ public class MemoryMessageRepository implements TestMessageRepository {
     @Override
     public List<Message> findMessagesAfterLastRead(String userId, String chatId, LocalDateTime lastRead) {
         return map.values().stream()
-            .filter(m -> m.getUserId().equals(userId) && Objects.equals(m.getChatId(), chatId))
+            .filter(m -> Objects.equals(m.getChatId(), chatId))
             .filter(m -> m.getCreatedAt().isAfter(lastRead))
             .toList();
     }
