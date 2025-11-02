@@ -1,13 +1,14 @@
-package io.github.jaehyeonhan.project.repository;
+package io.github.jaehyeonhan.project.service.repository;
 
 import io.github.jaehyeonhan.project.entity.Message;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class MemoryMessageRepository implements MessageRepository {
+public class MemoryMessageRepository implements TestMessageRepository {
 
     private static final Map<String, Message> map = new HashMap<>();
 

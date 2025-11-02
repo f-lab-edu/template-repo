@@ -7,8 +7,8 @@ import lombok.Setter;
 @Getter
 public class Chat {
 
-    private String id;
-    private String creatorId;
+    private final String id;
+    private final String creatorId;
 
     @Setter
     private String title;

@@ -11,6 +11,4 @@ public interface MessageRepository {
     Message save(Message message);
 
     List<Message> findMessagesAfterLastRead(String userId, String chatId, LocalDateTime lastRead);
-
-    void deleteAll();
 }

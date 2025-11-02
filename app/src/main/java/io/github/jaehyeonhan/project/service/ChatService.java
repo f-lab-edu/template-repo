@@ -61,16 +61,16 @@ public class ChatService {
         messageRepository.save(message);
     }
 
-    private void requireParticipation(String userId, String chatId) {
-        participationRepository.findByUserIdAndChatId(userId, chatId)
-                               .orElseThrow(() -> new NotParticipatingException("참여 중인 채팅이 아닙니다."));
-    }
-
     public List<MessageDto> getMessageList(String userId, String chatId, LocalDateTime lastRead) {
         requireParticipation(userId, chatId);
 
         return messageRepository.findMessagesAfterLastRead(userId, chatId, lastRead).stream()
-                                .map(MessageDto::from)
-                                .toList();
+                .map(MessageDto::from)
+                .toList();
+    }
+
+    private void requireParticipation(String userId, String chatId) {
+        participationRepository.findByUserIdAndChatId(userId, chatId)
+                               .orElseThrow(() -> new NotParticipatingException("참여 중인 채팅이 아닙니다."));
     }
 }

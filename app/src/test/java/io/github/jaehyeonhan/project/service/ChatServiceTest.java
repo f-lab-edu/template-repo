@@ -9,15 +9,11 @@ import io.github.jaehyeonhan.project.entity.Participation;
 import io.github.jaehyeonhan.project.exception.ChatNotFoundException;
 import io.github.jaehyeonhan.project.exception.InvalidChatTitleException;
 import io.github.jaehyeonhan.project.exception.NotParticipatingException;
-import io.github.jaehyeonhan.project.repository.ChatRepository;
-import io.github.jaehyeonhan.project.repository.MemoryChatRepository;
-import io.github.jaehyeonhan.project.repository.MemoryMessageRepository;
-import io.github.jaehyeonhan.project.repository.MemoryParticipationRepository;
-import io.github.jaehyeonhan.project.repository.MessageRepository;
-import io.github.jaehyeonhan.project.repository.ParticipationRepository;
+import io.github.jaehyeonhan.project.service.repository.*;
 import io.github.jaehyeonhan.project.service.dto.MessageDto;
 import java.time.LocalDateTime;
 import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,9 +26,9 @@ class ChatServiceTest {
     private static final String NON_EXISTENT_CHAT_ID = "9999999";
     private static final String PARTICIPATION_ID = "333";
 
-    private final ChatRepository chatRepository = new MemoryChatRepository();
-    private final ParticipationRepository participationRepository = new MemoryParticipationRepository();
-    private final MessageRepository messageRepository = new MemoryMessageRepository();
+    private final TestChatRepository chatRepository = new MemoryChatRepository();
+    private final TestParticipationRepository participationRepository = new MemoryParticipationRepository();
+    private final TestMessageRepository messageRepository = new MemoryMessageRepository();
 
     private final ChatService chatService = new ChatService(chatRepository, participationRepository, messageRepository, new IdGenerator());
 
@@ -87,8 +83,8 @@ class ChatServiceTest {
     }
 
     @Test
-    @DisplayName("채팅에 중복으로 참여해도 예외가 발생하지 않는다.")
-    void given_chatExists_when_joinParticipatingChat_then_notThrowException() {
+    @DisplayName("채팅에 중복으로 참여해도 참여 기록은 한 번만 생성된다.")
+    void given_chatExists_when_joinParticipatingChat_then_oneParticipationIsCreated() {
         // given
         createChat();
 
@@ -97,6 +93,7 @@ class ChatServiceTest {
         chatService.join(USER_ID, EXISTENT_CHAT_ID);
 
         // then
+        assertThat(participationRepository.countByUserIdAndChatId(USER_ID, EXISTENT_CHAT_ID)).isEqualTo(1);
     }
 
     @Test
