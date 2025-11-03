@@ -2,6 +2,7 @@ package io.github.jaehyeonhan.project.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.github.jaehyeonhan.project.configuration.TestConfig;
 import io.github.jaehyeonhan.project.controller.dto.request.CreateChatRequest;
 import io.github.jaehyeonhan.project.controller.dto.request.JoinChatRequest;
 import io.github.jaehyeonhan.project.controller.dto.request.SendMessageRequest;
@@ -16,11 +17,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@Import(TestConfig.class)
 class ChatControllerTest {
 
     @Autowired
