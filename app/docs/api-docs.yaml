@@ -1,0 +1,147 @@
+openapi: 3.1.0
+servers:
+- url: http://localhost:8080
+  description: Local server
+tags:
+- name: 채팅
+  description: 채팅 및 메시지 송수신 관련 API
+paths:
+  /api/chats:
+    post:
+      tags:
+      - 채팅
+      summary: 채팅 생성
+      description: 새로운 채팅을 생성하고 참가합니다.
+      operationId: createChat
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChatRequest"
+        required: true
+      responses:
+        "201":
+          description: 정상 생성
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatCreatedResponse"
+  /api/chats/{chatId}/participants:
+    post:
+      tags:
+      - 채팅
+      summary: 채팅 참가
+      description: 생성된 채팅에 참가합니다.
+      operationId: joinChat
+      parameters:
+      - name: chatId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinChatRequest"
+        required: true
+      responses:
+        "200":
+          description: 정상 참가
+  /api/chats/{chatId}/messages:
+    get:
+      tags:
+      - 채팅
+      summary: 새 채팅 메시지 조회
+      description: lastRead 이후의 채팅 메시지를 조회합니다.
+      operationId: getNewMessageList
+      parameters:
+      - name: request
+        in: query
+        required: true
+        schema:
+          $ref: "#/components/schemas/GetNewMessageRequest"
+      - name: chatId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: 정상 조회
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageListResponse"
+    post:
+      tags:
+      - 채팅
+      summary: 채팅 메시지 전송
+      description: 채팅에 메시지를 전송합니다.
+      operationId: sendMessage
+      parameters:
+      - name: chatId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+        required: true
+      responses:
+        "200":
+          description: 정상 전송
+components:
+  schemas:
+    CreateChatRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        title:
+          type: string
+    ChatCreatedResponse:
+      type: object
+      properties:
+        chatId:
+          type: string
+    JoinChatRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+    SendMessageRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        content:
+          type: string
+    GetNewMessageRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+        lastRead:
+          type: string
+          format: date-time
+    MessageListResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/MessageResponse"
+    MessageResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time

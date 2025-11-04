@@ -7,5 +7,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public class SendMessageRequest {
 
+    private final String userId;
     private final String content;
 }

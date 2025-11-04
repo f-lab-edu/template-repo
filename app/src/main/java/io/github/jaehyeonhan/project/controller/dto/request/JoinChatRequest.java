@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public class CreateChatRequest {
+public class JoinChatRequest {
     private final String userId;
-    private final String title;
 }
