@@ -64,7 +64,7 @@ public class ChatService {
     public List<MessageDto> getMessageList(String userId, String chatId, LocalDateTime lastRead) {
         requireParticipation(userId, chatId);
 
-        return messageRepository.findMessagesAfterLastRead(userId, chatId, lastRead).stream()
+        return messageRepository.findMessagesAfterLastRead(chatId, lastRead).stream()
                 .map(MessageDto::from)
                 .toList();
     }

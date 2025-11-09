@@ -7,6 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface JpaMessageRepository extends JpaRepository<Message, String> {
 
-    List<Message> findByUserIdAndChatIdAndCreatedAtAfter(String userId, String chatId,
-        LocalDateTime lastRead);
+    List<Message> findByChatIdAndCreatedAtAfter(String chatId, LocalDateTime lastRead);
 }

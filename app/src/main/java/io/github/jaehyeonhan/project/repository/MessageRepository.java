@@ -8,5 +8,5 @@ public interface MessageRepository {
 
     Message save(Message message);
 
-    List<Message> findMessagesAfterLastRead(String userId, String chatId, LocalDateTime lastRead);
+    List<Message> findMessagesAfterLastRead(String chatId, LocalDateTime lastRead);
 }

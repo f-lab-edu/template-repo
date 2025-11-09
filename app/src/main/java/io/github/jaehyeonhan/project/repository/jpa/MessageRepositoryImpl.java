@@ -19,9 +19,7 @@ public class MessageRepositoryImpl implements MessageRepository {
     }
 
     @Override
-    public List<Message> findMessagesAfterLastRead(String userId, String chatId,
-        LocalDateTime lastRead) {
-        return jpaMessageRepository.findByUserIdAndChatIdAndCreatedAtAfter(userId, chatId,
-            lastRead);
+    public List<Message> findMessagesAfterLastRead(String chatId, LocalDateTime lastRead) {
+        return jpaMessageRepository.findByChatIdAndCreatedAtAfter(chatId, lastRead);
     }
 }
