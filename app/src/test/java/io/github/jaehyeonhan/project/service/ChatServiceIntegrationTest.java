@@ -23,18 +23,25 @@ import io.github.jaehyeonhan.project.repository.jpa.MessageRepositoryImpl;
 import io.github.jaehyeonhan.project.repository.jpa.ParticipationRepositoryImpl;
 import io.github.jaehyeonhan.project.service.dto.MessageDto;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.jdbc.Sql;
 
 @DataJpaTest
 @Import({ChatService.class, ChatRepositoryImpl.class, ParticipationRepositoryImpl.class,
     MessageRepositoryImpl.class, IdGenerator.class})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public class ChatServiceIntegrationTest {
+
+    @BeforeEach
+    @Sql("/clear-tables.sql")
+    void clearTables() {
+    }
 
     @Autowired
     private ChatService chatService;

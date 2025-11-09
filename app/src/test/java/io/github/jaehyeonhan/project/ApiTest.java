@@ -10,6 +10,7 @@ import io.github.jaehyeonhan.project.controller.dto.response.MessageListResponse
 import io.github.jaehyeonhan.project.service.ChatService;
 import java.net.URI;
 import java.util.Objects;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +19,16 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class ApiTest {
+
+    @BeforeEach
+    @Sql("/clear-tables.sql")
+    void clearTables() {
+    }
 
     @Autowired
     private TestRestTemplate restTemplate;
