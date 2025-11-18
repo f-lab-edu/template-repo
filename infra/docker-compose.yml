@@ -6,7 +6,8 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
-
+    volumes:
+      - ./redis/token_bucket.lua:/etc/redis/lua/token_bucket.lua
   openresty:
     image: openresty/openresty:1.27.1.2-0-bookworm-fat
     container_name: openresty
@@ -16,4 +17,3 @@ services:
       - "8080:80"
     volumes:
       - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
-      - ./nginx/token_bucket.lua:/etc/nginx/lua/token_bucket.lua
