@@ -1,8 +1,8 @@
 #!lua name=token_bucket
 
 local function check_if_allowed(keys, args)
-    local bucket_size = tonumber(redis.call("GET", "rate_limit:config:bucket_size")) -- cluster 적용 시 args로 받아야 함
-    local refill_rate = tonumber(redis.call("GET", "rate_limit:config:refill_rate"))  -- cluster 적용 시 args로 받아야 함
+    local bucket_size = tonumber(redis.call("GET", "rate_limit:config:bucket_size"))
+    local refill_rate = tonumber(redis.call("GET", "rate_limit:config:refill_rate"))
 
     local user_id = args[1] -- cluster 적용 시 keys로 변경해야 함
     local t = redis.call("TIME")

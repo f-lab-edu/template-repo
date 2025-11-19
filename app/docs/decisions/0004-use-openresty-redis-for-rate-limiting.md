@@ -29,3 +29,6 @@ We needed to apply a consistent rate-limiting policy across the entire service.
 
 - **Dependence on Redis**
   If Redis becomes unavailable, rate-limiting behavior may degrade and fallback strategies are required. High availability options for Redis such as Sentinel and Cluster is required.
+  
+- **Fallback Rate Limiting with user_id Header by Default Nginx Rate Limiting**
+  When Redis is completely unavailable, Nginx rate limits by its embedded rate limiting mechanism with user-id header.
