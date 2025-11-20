@@ -1,0 +1,77 @@
+version: "3.9"
+
+services:
+  redis-master:
+    image: redis:latest
+    container_name: redis-master
+    ports:
+      - "6379:6379"
+      - "26379:26379"
+    command: >
+      sh -c "
+      redis-server /etc/redis/redis.conf &
+      redis-sentinel /etc/redis/sentinel.conf
+      "
+    volumes:
+      - ./redis/token_bucket.lua:/etc/redis/lua/token_bucket.lua
+      - ./redis/master.conf:/etc/redis/redis.conf:ro
+      - ./redis/sentinel.conf:/etc/redis/sentinel.conf
+    networks:
+      - redisnet
+      
+  redis-replica1:
+    image: redis:latest
+    container_name: redis-replica1
+    ports:
+      - "6380:6379"
+      - "26380:26379"
+    depends_on:
+      - redis-master
+    volumes:
+      - ./redis/replica.conf:/etc/redis/redis.conf:ro
+      - ./redis/sentinel.conf:/etc/redis/sentinel.conf
+    command: >
+      sh -c "
+      redis-server /etc/redis/redis.conf &
+      redis-sentinel /etc/redis/sentinel.conf
+      "
+    networks:
+      - redisnet
+    
+  redis-replica2:
+    image: redis:latest
+    container_name: redis-replica2
+    ports:
+      - "6381:6379"
+      - "26381:26379"
+    depends_on:
+      - redis-master
+    volumes:
+      - ./redis/replica.conf:/etc/redis/redis.conf:ro
+      - ./redis/sentinel.conf:/etc/redis/sentinel.conf
+    command: >
+      sh -c "
+      redis-server /etc/redis/redis.conf &
+      redis-sentinel /etc/redis/sentinel.conf
+      "
+    networks:
+      - redisnet
+      
+  openresty:
+    image: openresty/openresty:1.27.1.2-0-bookworm-fat
+    container_name: openresty
+    depends_on:
+      - redis-master
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+    networks:
+      - redisnet
+      - proxynet
+      
+networks:
+  redisnet:
+    driver: bridge
+  proxynet:
+    external: true
