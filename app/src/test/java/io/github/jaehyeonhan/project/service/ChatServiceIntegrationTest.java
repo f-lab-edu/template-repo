@@ -12,6 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.github.jaehyeonhan.project.entity.Chat;
 import io.github.jaehyeonhan.project.entity.Message;
 import io.github.jaehyeonhan.project.entity.Participation;
+import io.github.jaehyeonhan.project.entity.ParticipationRole;
 import io.github.jaehyeonhan.project.exception.ChatNotFoundException;
 import io.github.jaehyeonhan.project.exception.InvalidChatTitleException;
 import io.github.jaehyeonhan.project.exception.NotParticipatingException;
@@ -110,7 +111,7 @@ public class ChatServiceIntegrationTest {
     void given_userJoinedChat_when_sendMessage_then_messageIsSaved() {
         // given
         createChat(USER_ID, CHAT_ID);
-        createParticipation(USER_ID, CHAT_ID);
+        joinChatAs(PARTICIPATION_ID, USER_ID, CHAT_ID, ParticipationRole.CREATOR);
 
         // when
         chatService.sendMessage(USER_ID, CHAT_ID, "content");
@@ -136,7 +137,7 @@ public class ChatServiceIntegrationTest {
     void given_userJoinedChat_when_getNewMessage_then_messageListIsReturned() {
         // given
         createChat(ANOTHER_USER_ID, CHAT_ID);
-        createParticipation(USER_ID, CHAT_ID);
+        joinChatAs(PARTICIPATION_ID, USER_ID, CHAT_ID, ParticipationRole.USER);
 
         String messageId = "4444";
         Message message = new Message(messageId, CHAT_ID, USER_ID, "content");
@@ -167,8 +168,15 @@ public class ChatServiceIntegrationTest {
         chatRepository.save(chat);
     }
 
-    private void createParticipation(String userId, String chatId) {
-        Participation participation = new Participation(PARTICIPATION_ID, userId, chatId);
+    private void joinChatAs(String participationId, String userId, String chatId, ParticipationRole role) {
+        Participation participation;
+        if(role.equals(ParticipationRole.CREATOR)) {
+            participation = Participation.joinAsCreator(participationId, userId, chatId);
+        } else if(role.equals(ParticipationRole.USER)) {
+            participation = Participation.joinAsUser(participationId, userId, chatId);
+        } else {
+            throw new IllegalArgumentException("role 재확인");
+        }
         participationRepository.save(participation);
     }
 }

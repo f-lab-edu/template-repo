@@ -20,12 +20,23 @@ public class Participation {
     private String userId;
     private String chatId;
 
+    private ParticipationRole role;
+
     private LocalDateTime createdAt;
 
-    public Participation(String id, String userId, String chatId) {
+    public static Participation joinAsUser(String id, String userId, String chatId) {
+        return new Participation(id, userId, chatId, ParticipationRole.USER);
+    }
+
+    public static Participation joinAsCreator(String id, String userId, String chatId) {
+        return new Participation(id, userId, chatId, ParticipationRole.CREATOR);
+    }
+
+    private Participation(String id, String userId, String chatId, ParticipationRole role) {
         this.id = requireNonNull(id, "id");
         this.userId = requireNonNull(userId, "user id");
         this.chatId = requireNonNull(chatId, "chat id");
+        this.role = requireNonNull(role, "role");
         createdAt = LocalDateTime.now();
     }
 }

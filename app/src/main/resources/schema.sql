@@ -28,5 +28,6 @@ CREATE TABLE participation
     user_id    VARCHAR(64) NOT NULL,
     chat_id    VARCHAR(64) NOT NULL,
     created_at TIMESTAMP   NOT NULL,
+    role       VARCHAR(15) NOT NULL,
     CONSTRAINT fk_participation_chat FOREIGN KEY (chat_id) REFERENCES chat (id)
 );

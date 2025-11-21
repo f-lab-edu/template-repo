@@ -26,7 +26,6 @@ import io.github.jaehyeonhan.project.repository.ParticipationRepository;
 import io.github.jaehyeonhan.project.service.dto.MessageDto;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,14 +61,10 @@ class ChatServiceTest {
     void given_title_when_create_then_createChatAndRequesterJoinsChatAndReturnsChatId() {
         // given
         Chat chat = new Chat(CHAT_ID, USER_ID, "test");
-        Participation participation = new Participation(PARTICIPATION_ID, USER_ID, CHAT_ID);
+        Participation participation = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
 
         given(idGenerator.generate()).willReturn(CHAT_ID, PARTICIPATION_ID);
         given(chatRepository.save(any(Chat.class))).willReturn(chat);
-
-        given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
-        given(participationRepository.findByUserIdAndChatId(USER_ID, CHAT_ID)).willReturn(
-            Optional.empty());
         given(participationRepository.save(any(Participation.class))).willReturn(participation);
 
         // when
@@ -97,7 +92,7 @@ class ChatServiceTest {
     void given_chatExistsAndNotJoined_when_join_then_userJoinsChat() {
         // given
         Chat chat = new Chat(CHAT_ID, ANOTHER_USER_ID, "title");
-        Participation participation = new Participation(PARTICIPATION_ID, USER_ID, CHAT_ID);
+        Participation participation = Participation.joinAsUser(PARTICIPATION_ID, USER_ID, CHAT_ID);
 
         given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
         given(participationRepository.findByUserIdAndChatId(USER_ID, CHAT_ID)).willReturn(
@@ -117,7 +112,7 @@ class ChatServiceTest {
     void given_chatExists_when_joinParticipatingChat_then_oneParticipationIsCreated() {
         // given
         Chat chat = new Chat(CHAT_ID, ANOTHER_USER_ID, "title");
-        Participation participation = new Participation(PARTICIPATION_ID, USER_ID, CHAT_ID);
+        Participation participation = Participation.joinAsUser(PARTICIPATION_ID, USER_ID, CHAT_ID);
 
         given(chatRepository.findById(ChatConst.CHAT_ID)).willReturn(Optional.of(chat));
         given(participationRepository.findByUserIdAndChatId(USER_ID, CHAT_ID)).willReturn(
@@ -149,7 +144,7 @@ class ChatServiceTest {
     void given_userJoinedChat_when_sendMessage_then_messageIsSaved() {
         // given
         Message message = new Message(MESSAGE_ID, CHAT_ID, USER_ID, "content");
-        Participation participation = new Participation(PARTICIPATION_ID, USER_ID, CHAT_ID);
+        Participation participation = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
 
         given(participationRepository.findByUserIdAndChatId(USER_ID, CHAT_ID)).willReturn(
             Optional.of(participation));
@@ -179,7 +174,7 @@ class ChatServiceTest {
     @DisplayName("참여한 채팅의 새 메시지 조회 시 메시지를 응답한다.")
     void given_userJoinedChat_when_getNewMessage_then_messageListIsReturned() {
         // given
-        Participation participation = new Participation(PARTICIPATION_ID, USER_ID, CHAT_ID);
+        Participation participation = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
         Message message = new Message(MESSAGE_ID, CHAT_ID, USER_ID, "content");
 
         given(participationRepository.findByUserIdAndChatId(USER_ID, CHAT_ID)).willReturn(
@@ -207,15 +202,15 @@ class ChatServiceTest {
             .isInstanceOf(NotParticipatingException.class);
     }
 
-    private String getNewParticipationId() {
-        return UUID.randomUUID().toString();
+    @Test
+    @DisplayName("방장과 관리자는 다른 일반 참가자의 메시지 전송을 차단할 수 있다.")
+    void given_chatCreatorAndManager_when_blockUser_then_userIsBlocked() {
+
     }
 
-    private String getNewChatId() {
-        return UUID.randomUUID().toString();
-    }
+    @Test
+    @DisplayName("방장과 관리자는 서로의 메시지 전송을 차단할 수 없다.")
+    void given_chatCreatorAndManager_when_blockEachOther_then_throwException() {
 
-    private String getNewMessageId() {
-        return UUID.randomUUID().toString();
     }
 }

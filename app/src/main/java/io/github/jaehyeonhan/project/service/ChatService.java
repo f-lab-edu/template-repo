@@ -3,6 +3,7 @@ package io.github.jaehyeonhan.project.service;
 import io.github.jaehyeonhan.project.entity.Chat;
 import io.github.jaehyeonhan.project.entity.Message;
 import io.github.jaehyeonhan.project.entity.Participation;
+import io.github.jaehyeonhan.project.entity.ParticipationRole;
 import io.github.jaehyeonhan.project.exception.ChatNotFoundException;
 import io.github.jaehyeonhan.project.exception.NotParticipatingException;
 import io.github.jaehyeonhan.project.repository.ChatRepository;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,12 +26,15 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final IdGenerator idGenerator;
 
+    @Transactional
     public String createChat(String userId, String title) {
         String chatId = idGenerator.generate();
         Chat chat = new Chat(chatId, userId, title);
         chatRepository.save(chat);
 
-        join(userId, chatId);
+        String participationId = idGenerator.generate();
+        Participation participation = Participation.joinAsCreator(participationId, userId, chatId);
+        participationRepository.save(participation);
 
         return chat.getId();
     }
@@ -45,7 +50,7 @@ public class ChatService {
         }
 
         String participationId = idGenerator.generate();
-        Participation participation = new Participation(participationId, userId, chatId);
+        Participation participation = Participation.joinAsUser(participationId, userId, chatId);
         participationRepository.save(participation);
     }
 
