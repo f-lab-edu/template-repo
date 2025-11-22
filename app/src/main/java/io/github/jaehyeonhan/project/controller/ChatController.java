@@ -1,5 +1,6 @@
 package io.github.jaehyeonhan.project.controller;
 
+import io.github.jaehyeonhan.project.controller.dto.request.BlockUserRequest;
 import io.github.jaehyeonhan.project.controller.dto.request.CreateChatRequest;
 import io.github.jaehyeonhan.project.controller.dto.request.GetNewMessageRequest;
 import io.github.jaehyeonhan.project.controller.dto.request.JoinChatRequest;
@@ -91,5 +92,22 @@ public class ChatController {
                                                             .toList();
 
         return ResponseEntity.ok(new MessageListResponse(messageResponses));
+    }
+
+    @Operation(
+        summary = "사용자 차단",
+        description = "특정 채팅 참가자의 메시지 전송을 차단합니다.",
+        responses = {
+            @ApiResponse(responseCode = "200", description = "정상 차단"),
+            @ApiResponse(responseCode = "409", description = "이미 차단된 사용자"),
+            @ApiResponse(responseCode = "403", description = "차단 권한 없음")
+        }
+    )
+    @PostMapping("/{chatId}/blocks")
+    public ResponseEntity<Void> blockUser(@RequestBody BlockUserRequest request,
+        @PathVariable String chatId) {
+        chatService.blockUser(request.getRequesterUserId(), request.getTargetUserId(), chatId,
+            request.getDuration());
+        return ResponseEntity.ok().build();
     }
 }

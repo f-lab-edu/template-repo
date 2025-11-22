@@ -31,3 +31,14 @@ CREATE TABLE participation
     role       VARCHAR(15) NOT NULL,
     CONSTRAINT fk_participation_chat FOREIGN KEY (chat_id) REFERENCES chat (id)
 );
+
+-- block 테이블
+CREATE TABLE block
+(
+    id               VARCHAR(64) PRIMARY KEY,
+    participation_id VARCHAR(64) NOT NULL,
+    created_at       TIMESTAMP   NOT NULL,
+    expires_at       TIMESTAMP   NOT NULL,
+    retracted        BOOLEAN     NOT NULL,
+    CONSTRAINT fk_block_participation FOREIGN KEY (participation_id) REFERENCES participation (id)
+)

@@ -19,6 +19,7 @@ import io.github.jaehyeonhan.project.exception.NotParticipatingException;
 import io.github.jaehyeonhan.project.repository.ChatRepository;
 import io.github.jaehyeonhan.project.repository.MessageRepository;
 import io.github.jaehyeonhan.project.repository.ParticipationRepository;
+import io.github.jaehyeonhan.project.repository.jpa.BlockRepositoryImpl;
 import io.github.jaehyeonhan.project.repository.jpa.ChatRepositoryImpl;
 import io.github.jaehyeonhan.project.repository.jpa.MessageRepositoryImpl;
 import io.github.jaehyeonhan.project.repository.jpa.ParticipationRepositoryImpl;
@@ -35,7 +36,7 @@ import org.springframework.test.context.jdbc.Sql;
 
 @DataJpaTest
 @Import({ChatService.class, ChatRepositoryImpl.class, ParticipationRepositoryImpl.class,
-    MessageRepositoryImpl.class, IdGenerator.class})
+    MessageRepositoryImpl.class, BlockRepositoryImpl.class, IdGenerator.class})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public class ChatServiceIntegrationTest {
 
