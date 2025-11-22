@@ -6,9 +6,11 @@ import io.github.jaehyeonhan.project.entity.Message;
 import io.github.jaehyeonhan.project.entity.Participation;
 import io.github.jaehyeonhan.project.exception.AlreadyBlockedException;
 import io.github.jaehyeonhan.project.exception.ChatNotFoundException;
+import io.github.jaehyeonhan.project.exception.NotBlockedException;
 import io.github.jaehyeonhan.project.exception.NotParticipatingException;
 import io.github.jaehyeonhan.project.exception.UnauthorizedBlockException;
 import io.github.jaehyeonhan.project.exception.UnauthorizedSendMessageException;
+import io.github.jaehyeonhan.project.exception.UnauthorizedUnblockException;
 import io.github.jaehyeonhan.project.repository.BlockRepository;
 import io.github.jaehyeonhan.project.repository.ChatRepository;
 import io.github.jaehyeonhan.project.repository.MessageRepository;
@@ -106,6 +108,22 @@ public class ChatService {
 
         String blockId = idGenerator.generate();
         Block block = Block.blockFor(blockId, target.getId(), durationInMin);
+        blockRepository.save(block);
+    }
+
+    public void unblockUser(String actorUserId, String targetUserId, String chatId) {
+        requireChat(chatId);
+        Participation actor = requireParticipation(actorUserId, chatId);
+        Participation target = requireParticipation(targetUserId, chatId);
+
+        if (!actor.canUnblock(target)) {
+            throw new UnauthorizedUnblockException("차단 해제 권한이 없습니다.");
+        }
+
+        Block block = blockRepository.findActiveBlockByParticipationId(target.getId(),
+                                         LocalDateTime.now())
+                                     .orElseThrow(() -> new NotBlockedException("차단 상태가 아닙니다."));
+        block.retract();
         blockRepository.save(block);
     }
 

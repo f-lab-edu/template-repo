@@ -47,6 +47,10 @@ public class Participation {
         return this.role.canBlock(target.getRole());
     }
 
+    public boolean canUnblock(Participation target) {
+        return this.role.canUnblock(target.getRole()); // block과 같은 권한
+    }
+
     public void promoteToManager(Participation target) {
         if (!this.canPromoteToManager()) {
             throw new UnauthorizedPromotionException("매니저 승격 권한이 없습니다");

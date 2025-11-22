@@ -2,13 +2,17 @@ package io.github.jaehyeonhan.project.service;
 
 import static io.github.jaehyeonhan.project.service.ChatConst.ANOTHER_USER_ID;
 import static io.github.jaehyeonhan.project.service.ChatConst.BEGINNING_OF_TIME;
+import static io.github.jaehyeonhan.project.service.ChatConst.BLOCK_ID;
 import static io.github.jaehyeonhan.project.service.ChatConst.CHAT_ID;
 import static io.github.jaehyeonhan.project.service.ChatConst.NON_EXISTENT_CHAT_ID;
 import static io.github.jaehyeonhan.project.service.ChatConst.PARTICIPATION_ID;
 import static io.github.jaehyeonhan.project.service.ChatConst.USER_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.then;
 
+import io.github.jaehyeonhan.project.entity.Block;
 import io.github.jaehyeonhan.project.entity.Chat;
 import io.github.jaehyeonhan.project.entity.Message;
 import io.github.jaehyeonhan.project.entity.Participation;
@@ -16,6 +20,7 @@ import io.github.jaehyeonhan.project.entity.ParticipationRole;
 import io.github.jaehyeonhan.project.exception.ChatNotFoundException;
 import io.github.jaehyeonhan.project.exception.InvalidChatTitleException;
 import io.github.jaehyeonhan.project.exception.NotParticipatingException;
+import io.github.jaehyeonhan.project.repository.BlockRepository;
 import io.github.jaehyeonhan.project.repository.ChatRepository;
 import io.github.jaehyeonhan.project.repository.MessageRepository;
 import io.github.jaehyeonhan.project.repository.ParticipationRepository;
@@ -56,6 +61,9 @@ public class ChatServiceIntegrationTest {
 
     @Autowired
     private MessageRepository messageRepository;
+
+    @Autowired
+    private BlockRepository blockRepository;
 
     @Test
     @DisplayName("채팅 정상 생성 시 chat이 생성되고, 요청자가 참가자로 추가된다.")
@@ -180,4 +188,23 @@ public class ChatServiceIntegrationTest {
         }
         participationRepository.save(participation);
     }
+
+    @Test
+    @DisplayName("차단이 해제된 사용자는 정상적으로 메시지를 전송할 수 있다.")
+    void given_unblockedUser_when_sendMessage_then_messageIsSent() {
+        // given
+        createChat(ANOTHER_USER_ID, CHAT_ID);
+        joinChatAs(PARTICIPATION_ID, USER_ID, CHAT_ID, ParticipationRole.USER);
+        Block block = Block.blockFor(BLOCK_ID, PARTICIPATION_ID, 0);
+        block.retract();
+        blockRepository.save(block);
+
+        // when
+        chatService.sendMessage(USER_ID, CHAT_ID, "content");
+
+        // then
+        List<Message> messageList = messageRepository.findMessagesAfterLastRead(CHAT_ID, BEGINNING_OF_TIME);
+        assertThat(messageList).isNotEmpty();
+    }
 }
+

@@ -46,4 +46,8 @@ public class Block {
                 "block duartion should be between 5 and 30 minutes");
         }
     }
+
+    public void retract() {
+        this.retracted = true;
+    }
 }

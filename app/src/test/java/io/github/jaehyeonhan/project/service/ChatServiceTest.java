@@ -27,9 +27,11 @@ import io.github.jaehyeonhan.project.entity.Participation;
 import io.github.jaehyeonhan.project.exception.ChatNotFoundException;
 import io.github.jaehyeonhan.project.exception.InvalidBlockDurationException;
 import io.github.jaehyeonhan.project.exception.InvalidChatTitleException;
+import io.github.jaehyeonhan.project.exception.NotBlockedException;
 import io.github.jaehyeonhan.project.exception.NotParticipatingException;
 import io.github.jaehyeonhan.project.exception.UnauthorizedBlockException;
 import io.github.jaehyeonhan.project.exception.UnauthorizedSendMessageException;
+import io.github.jaehyeonhan.project.exception.UnauthorizedUnblockException;
 import io.github.jaehyeonhan.project.repository.BlockRepository;
 import io.github.jaehyeonhan.project.repository.ChatRepository;
 import io.github.jaehyeonhan.project.repository.MessageRepository;
@@ -336,7 +338,8 @@ class ChatServiceTest {
             Optional.of(creator));
         given(participationRepository.findByUserIdAndChatId(eq(ANOTHER_USER_ID),
             eq(CHAT_ID))).willReturn(Optional.of(user));
-        given(blockRepository.findActiveBlockByParticipationId(user.getId(), LocalDateTime.now())).willReturn(
+        given(blockRepository.findActiveBlockByParticipationId(user.getId(),
+            LocalDateTime.now())).willReturn(
             Optional.of(block));
 
         // when, then
@@ -358,13 +361,91 @@ class ChatServiceTest {
         given(participationRepository.findByUserIdAndChatId(blockedUser.getUserId(),
             chat.getId())).willReturn(
             Optional.of(blockedUser));
-        given(blockRepository.findActiveBlockByParticipationId(blockedUser.getId(), LocalDateTime.now())).willReturn(
+        given(blockRepository.findActiveBlockByParticipationId(blockedUser.getId(),
+            LocalDateTime.now())).willReturn(
             Optional.of(block));
 
         // when, then
         assertThatThrownBy(() -> {
             chatService.sendMessage(blockedUser.getUserId(), chat.getId(), "message");
         }).isInstanceOf(UnauthorizedSendMessageException.class);
+    }
+
+    @Test
+    @DisplayName("현재 차단 상태인 참가자의 차단을 철회(해제)할 수 있다.")
+    void given_blockedUser_when_unblock_then_retractBlock() {
+        // given
+        ArgumentCaptor<Block> captor = ArgumentCaptor.forClass(Block.class);
+        Chat chat = new Chat(CHAT_ID, USER_ID, "title");
+        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID,
+            CHAT_ID);
+        Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID,
+            CHAT_ID);
+        Block block = Block.blockFor(BLOCK_ID, user.getId(), VALID_BLOCK_DURATION);
+
+        given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
+        given(participationRepository.findByUserIdAndChatId(eq(USER_ID), eq(CHAT_ID))).willReturn(
+            Optional.of(creator));
+        given(participationRepository.findByUserIdAndChatId(eq(ANOTHER_USER_ID),
+            eq(CHAT_ID))).willReturn(Optional.of(user));
+        given(blockRepository.findActiveBlockByParticipationId(eq(user.getId()),
+            any(LocalDateTime.class))).willReturn(
+            Optional.of(
+                block)); // fixme: potential regression not verifying calling LocalDateTime.now()
+
+        // when
+        chatService.unblockUser(creator.getUserId(), user.getUserId(), chat.getId());
+
+        // then
+        then(blockRepository).should().save(captor.capture());
+        assertThat(captor.getValue().isRetracted()).isTrue();
+    }
+
+    @Test
+    @DisplayName("차단되지 않은 참가자를 차단 해제할 수 없다.")
+    void given_notBlockedUser_when_unblock_then_throwException() {
+        // given
+        Chat chat = new Chat(CHAT_ID, USER_ID, "title");
+        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID,
+            CHAT_ID);
+        Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID,
+            CHAT_ID);
+
+        given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
+        given(participationRepository.findByUserIdAndChatId(eq(USER_ID), eq(CHAT_ID))).willReturn(
+            Optional.of(creator));
+        given(participationRepository.findByUserIdAndChatId(eq(ANOTHER_USER_ID),
+            eq(CHAT_ID))).willReturn(Optional.of(user));
+        given(blockRepository.findActiveBlockByParticipationId(eq(user.getId()),
+            any(LocalDateTime.class))).willReturn(Optional.empty());
+
+        // when, then
+        assertThatThrownBy(() -> {
+            chatService.unblockUser(creator.getUserId(), user.getUserId(), chat.getId());
+        }).isInstanceOf(NotBlockedException.class);
+    }
+
+    @Test
+    @DisplayName("일반 참가자는 다른 참가자의 차단을 해제할 수 없다")
+    void given_notAuthorizedUser_when_unblock_then_throwException() {
+        // given
+        Chat chat = new Chat(CHAT_ID, USER_ID, "title");
+        Participation user1 = Participation.joinAsUser(PARTICIPATION_ID, ANOTHER_USER_ID,
+            CHAT_ID);
+        Participation user2 = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, THE_OTHER_USER_ID,
+            CHAT_ID);
+
+        given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
+        given(participationRepository.findByUserIdAndChatId(eq(user1.getUserId()),
+            eq(chat.getId()))).willReturn(
+            Optional.of(user1));
+        given(participationRepository.findByUserIdAndChatId(eq(user2.getUserId()),
+            eq(chat.getId()))).willReturn(Optional.of(user2));
+
+        // when, then
+        assertThatThrownBy(() -> {
+            chatService.unblockUser(user1.getUserId(), user2.getUserId(), chat.getId());
+        }).isInstanceOf(UnauthorizedUnblockException.class);
     }
 
     private Participation getManager(Participation creator, String participationId, String userId) {
