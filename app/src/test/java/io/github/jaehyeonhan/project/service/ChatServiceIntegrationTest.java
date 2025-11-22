@@ -1,5 +1,6 @@
 package io.github.jaehyeonhan.project.service;
 
+import static io.github.jaehyeonhan.project.service.ChatConst.ANOTHER_PARTICIPATION_ID;
 import static io.github.jaehyeonhan.project.service.ChatConst.ANOTHER_USER_ID;
 import static io.github.jaehyeonhan.project.service.ChatConst.BEGINNING_OF_TIME;
 import static io.github.jaehyeonhan.project.service.ChatConst.BLOCK_ID;
@@ -7,10 +8,9 @@ import static io.github.jaehyeonhan.project.service.ChatConst.CHAT_ID;
 import static io.github.jaehyeonhan.project.service.ChatConst.NON_EXISTENT_CHAT_ID;
 import static io.github.jaehyeonhan.project.service.ChatConst.PARTICIPATION_ID;
 import static io.github.jaehyeonhan.project.service.ChatConst.USER_ID;
+import static io.github.jaehyeonhan.project.service.ChatConst.VALID_BLOCK_DURATION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.then;
 
 import io.github.jaehyeonhan.project.entity.Block;
 import io.github.jaehyeonhan.project.entity.Chat;
@@ -24,31 +24,21 @@ import io.github.jaehyeonhan.project.repository.BlockRepository;
 import io.github.jaehyeonhan.project.repository.ChatRepository;
 import io.github.jaehyeonhan.project.repository.MessageRepository;
 import io.github.jaehyeonhan.project.repository.ParticipationRepository;
-import io.github.jaehyeonhan.project.repository.jpa.BlockRepositoryImpl;
-import io.github.jaehyeonhan.project.repository.jpa.ChatRepositoryImpl;
-import io.github.jaehyeonhan.project.repository.jpa.MessageRepositoryImpl;
-import io.github.jaehyeonhan.project.repository.jpa.ParticipationRepositoryImpl;
 import io.github.jaehyeonhan.project.service.dto.MessageDto;
+import java.time.LocalDateTime;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.jdbc.Sql;
 
-@DataJpaTest
-@Import({ChatService.class, ChatRepositoryImpl.class, ParticipationRepositoryImpl.class,
-    MessageRepositoryImpl.class, BlockRepositoryImpl.class, IdGenerator.class})
+@SpringBootTest(webEnvironment = WebEnvironment.NONE)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Sql("/clear-tables.sql")
 public class ChatServiceIntegrationTest {
-
-    @BeforeEach
-    @Sql("/clear-tables.sql")
-    void clearTables() {
-    }
 
     @Autowired
     private ChatService chatService;
@@ -126,7 +116,8 @@ public class ChatServiceIntegrationTest {
         chatService.sendMessage(USER_ID, CHAT_ID, "content");
 
         // then
-        List<Message> messageList = messageRepository.findMessagesAfterLastRead(CHAT_ID, BEGINNING_OF_TIME);
+        List<Message> messageList = messageRepository.findMessagesAfterLastRead(CHAT_ID,
+            BEGINNING_OF_TIME);
         assertThat(messageList).isNotEmpty();
     }
 
@@ -177,11 +168,12 @@ public class ChatServiceIntegrationTest {
         chatRepository.save(chat);
     }
 
-    private void joinChatAs(String participationId, String userId, String chatId, ParticipationRole role) {
+    private void joinChatAs(String participationId, String userId, String chatId,
+        ParticipationRole role) {
         Participation participation;
-        if(role.equals(ParticipationRole.CREATOR)) {
+        if (role.equals(ParticipationRole.CREATOR)) {
             participation = Participation.joinAsCreator(participationId, userId, chatId);
-        } else if(role.equals(ParticipationRole.USER)) {
+        } else if (role.equals(ParticipationRole.USER)) {
             participation = Participation.joinAsUser(participationId, userId, chatId);
         } else {
             throw new IllegalArgumentException("role 재확인");
@@ -203,8 +195,28 @@ public class ChatServiceIntegrationTest {
         chatService.sendMessage(USER_ID, CHAT_ID, "content");
 
         // then
-        List<Message> messageList = messageRepository.findMessagesAfterLastRead(CHAT_ID, BEGINNING_OF_TIME);
+        List<Message> messageList = messageRepository.findMessagesAfterLastRead(CHAT_ID,
+            BEGINNING_OF_TIME);
         assertThat(messageList).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("차단이 해제된 사용자를 다시 차단할 수 있다.")
+    void given_unblockedUser_when_block_then_blockedAgain() {
+        // given
+        createChat(ANOTHER_USER_ID, CHAT_ID);
+        joinChatAs(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID, ParticipationRole.CREATOR);
+        joinChatAs(PARTICIPATION_ID, USER_ID, CHAT_ID, ParticipationRole.USER);
+        Block block = Block.blockFor(BLOCK_ID, PARTICIPATION_ID, 0);
+        block.retract();
+        blockRepository.save(block);
+
+        // when
+        chatService.blockUser(ANOTHER_USER_ID, USER_ID, CHAT_ID, VALID_BLOCK_DURATION);
+
+        // then
+        assertThat(blockRepository.findActiveBlockByParticipationId(PARTICIPATION_ID,
+            LocalDateTime.now())).isNotEmpty();
     }
 }
 

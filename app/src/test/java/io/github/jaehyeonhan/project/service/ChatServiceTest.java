@@ -361,8 +361,8 @@ class ChatServiceTest {
         given(participationRepository.findByUserIdAndChatId(blockedUser.getUserId(),
             chat.getId())).willReturn(
             Optional.of(blockedUser));
-        given(blockRepository.findActiveBlockByParticipationId(blockedUser.getId(),
-            LocalDateTime.now())).willReturn(
+        given(blockRepository.findActiveBlockByParticipationId(eq(blockedUser.getId()),
+            any(LocalDateTime.class))).willReturn(
             Optional.of(block));
 
         // when, then

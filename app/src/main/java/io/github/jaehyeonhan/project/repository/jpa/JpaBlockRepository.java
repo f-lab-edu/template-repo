@@ -8,7 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface JpaBlockRepository extends JpaRepository<Block, String> {
 
-    Optional<Block> findByParticipationIdAndRetractedFalse(String participationId);
-
-    Optional<Block> findByParticipationIdAndRetractedFalseAndExpiresAtAfter(String participationId, LocalDateTime expiresAtAfter);
+    Optional<Block> findByParticipationIdAndRetractedFalseAndExpiresAtAfter(String participationId, LocalDateTime now);
 }
