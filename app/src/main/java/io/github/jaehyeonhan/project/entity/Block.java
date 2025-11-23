@@ -1,18 +1,18 @@
 package io.github.jaehyeonhan.project.entity;
 
+import static io.github.jaehyeonhan.project.util.ValidationUtils.requireNonNull;
+
 import io.github.jaehyeonhan.project.constant.TimeConstant;
 import io.github.jaehyeonhan.project.exception.InvalidBlockDurationException;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
 public class Block {
 
@@ -38,6 +38,16 @@ public class Block {
         }
 
         return new Block(id, participationId, now, expiresAt, false);
+    }
+
+    private Block(String id, String participationId, LocalDateTime createdAt,
+        LocalDateTime expiresAt,
+        boolean retracted) {
+        this.id = requireNonNull(id, "Block id");
+        this.participationId = requireNonNull(participationId, "Participation id");;
+        this.createdAt = requireNonNull(createdAt, "Created at");
+        this.expiresAt = requireNonNull(expiresAt, "Expires at");
+        this.retracted = retracted;
     }
 
     private static void validateDuration(int durationInMin) {
