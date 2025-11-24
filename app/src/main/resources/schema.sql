@@ -42,4 +42,6 @@ CREATE TABLE block
     expires_at       TIMESTAMP   NOT NULL,
     retracted        BOOLEAN     NOT NULL,
     CONSTRAINT fk_block_participation FOREIGN KEY (participation_id) REFERENCES participation (id)
-)
+);
+
+CREATE INDEX participation_id_idx ON block(participation_id);
