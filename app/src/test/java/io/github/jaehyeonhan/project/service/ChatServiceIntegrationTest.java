@@ -218,5 +218,25 @@ public class ChatServiceIntegrationTest {
         assertThat(blockRepository.findActiveBlockByParticipationId(PARTICIPATION_ID,
             LocalDateTime.now())).isNotEmpty();
     }
+
+    @Test
+    @DisplayName("일시 차단은 차단 기간이 지나면 해제된다.")
+    void given_temporaryBlock_when_passExpiration_then_unblocked() {
+        // given
+        createChat(ANOTHER_USER_ID, CHAT_ID);
+        joinChatAs(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID, ParticipationRole.CREATOR);
+        joinChatAs(PARTICIPATION_ID, USER_ID, CHAT_ID, ParticipationRole.USER);
+        Block block = Block.blockFor(BLOCK_ID, PARTICIPATION_ID, LocalDateTime.now().minusMinutes(11),
+            10);
+        blockRepository.save(block);
+
+        // when
+        chatService.sendMessage(USER_ID, CHAT_ID, "content");
+
+        // then
+        List<Message> messageList = messageRepository.findMessagesAfterLastRead(CHAT_ID,
+            BEGINNING_OF_TIME);
+        assertThat(messageList).isNotEmpty();
+    }
 }
 
