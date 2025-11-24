@@ -16,6 +16,7 @@ import io.github.jaehyeonhan.project.repository.ChatRepository;
 import io.github.jaehyeonhan.project.repository.MessageRepository;
 import io.github.jaehyeonhan.project.repository.ParticipationRepository;
 import io.github.jaehyeonhan.project.service.dto.MessageDto;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +34,7 @@ public class ChatService {
     private final BlockRepository blockRepository;
 
     private final IdGenerator idGenerator;
+    private final Clock clock;
 
     @Transactional
     public String createChat(String userId, String title) {
@@ -76,7 +78,7 @@ public class ChatService {
         }
 
         String messageId = idGenerator.generate();
-        Message message = new Message(messageId, chatId, userId, content);
+        Message message = new Message(messageId, chatId, userId, content, LocalDateTime.now(clock));
         messageRepository.save(message);
     }
 
@@ -107,7 +109,7 @@ public class ChatService {
         validateNotBlocked(target.getId());
 
         String blockId = idGenerator.generate();
-        Block block = Block.blockFor(blockId, target.getId(), durationInMin);
+        Block block = Block.blockFor(blockId, target.getId(), LocalDateTime.now(clock), durationInMin);
         blockRepository.save(block);
     }
 
@@ -121,7 +123,7 @@ public class ChatService {
         }
 
         Block block = blockRepository.findActiveBlockByParticipationId(target.getId(),
-                                         LocalDateTime.now())
+                                         LocalDateTime.now(clock))
                                      .orElseThrow(() -> new NotBlockedException("차단 상태가 아닙니다."));
         block.retract();
         blockRepository.save(block);
@@ -129,7 +131,7 @@ public class ChatService {
 
     private void validateNotBlocked(String participationId) {
         Optional<Block> optionalBlock = blockRepository.findActiveBlockByParticipationId(
-            participationId, LocalDateTime.now());
+            participationId, LocalDateTime.now(clock));
         if (optionalBlock.isPresent()) {
             throw new AlreadyBlockedException("차단된 사용자입니다.");
         }

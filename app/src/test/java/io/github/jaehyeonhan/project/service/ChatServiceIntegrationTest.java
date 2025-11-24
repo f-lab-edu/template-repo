@@ -140,7 +140,7 @@ public class ChatServiceIntegrationTest {
         joinChatAs(PARTICIPATION_ID, USER_ID, CHAT_ID, ParticipationRole.USER);
 
         String messageId = "4444";
-        Message message = new Message(messageId, CHAT_ID, USER_ID, "content");
+        Message message = new Message(messageId, CHAT_ID, USER_ID, "content", LocalDateTime.now());
         messageRepository.save(message);
 
         // when
@@ -187,7 +187,7 @@ public class ChatServiceIntegrationTest {
         // given
         createChat(ANOTHER_USER_ID, CHAT_ID);
         joinChatAs(PARTICIPATION_ID, USER_ID, CHAT_ID, ParticipationRole.USER);
-        Block block = Block.blockFor(BLOCK_ID, PARTICIPATION_ID, 0);
+        Block block = Block.blockFor(BLOCK_ID, PARTICIPATION_ID, LocalDateTime.now(), 0);
         block.retract();
         blockRepository.save(block);
 
@@ -207,7 +207,7 @@ public class ChatServiceIntegrationTest {
         createChat(ANOTHER_USER_ID, CHAT_ID);
         joinChatAs(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID, ParticipationRole.CREATOR);
         joinChatAs(PARTICIPATION_ID, USER_ID, CHAT_ID, ParticipationRole.USER);
-        Block block = Block.blockFor(BLOCK_ID, PARTICIPATION_ID, 0);
+        Block block = Block.blockFor(BLOCK_ID, PARTICIPATION_ID, LocalDateTime.now(), 0);
         block.retract();
         blockRepository.save(block);
 

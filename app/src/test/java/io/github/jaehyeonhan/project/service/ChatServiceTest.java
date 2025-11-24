@@ -37,6 +37,7 @@ import io.github.jaehyeonhan.project.repository.ChatRepository;
 import io.github.jaehyeonhan.project.repository.MessageRepository;
 import io.github.jaehyeonhan.project.repository.ParticipationRepository;
 import io.github.jaehyeonhan.project.service.dto.MessageDto;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +49,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,6 +69,9 @@ class ChatServiceTest {
 
     @Mock
     private IdGenerator idGenerator;
+
+    @Spy
+    private Clock clock = Clock.systemDefaultZone();
 
     @InjectMocks
     private ChatService chatService;
@@ -164,7 +169,7 @@ class ChatServiceTest {
     @DisplayName("참여한 채팅에 메시지 전송 시 메시지가 저장된다.")
     void given_userJoinedChat_when_sendMessage_then_messageIsSaved() {
         // given
-        Message message = new Message(MESSAGE_ID, CHAT_ID, USER_ID, "content");
+        Message message = new Message(MESSAGE_ID, CHAT_ID, USER_ID, "content", LocalDateTime.now());
         Participation participation = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID,
             CHAT_ID);
 
@@ -198,7 +203,7 @@ class ChatServiceTest {
         // given
         Participation participation = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID,
             CHAT_ID);
-        Message message = new Message(MESSAGE_ID, CHAT_ID, USER_ID, "content");
+        Message message = new Message(MESSAGE_ID, CHAT_ID, USER_ID, "content", LocalDateTime.now());
 
         given(participationRepository.findByUserIdAndChatId(USER_ID, CHAT_ID)).willReturn(
             Optional.of(participation));
@@ -240,6 +245,7 @@ class ChatServiceTest {
             Optional.of(creator));
         given(participationRepository.findByUserIdAndChatId(eq(ANOTHER_USER_ID),
             eq(CHAT_ID))).willReturn(Optional.of(user));
+        given(idGenerator.generate()).willReturn(BLOCK_ID);
 
         // when
         chatService.blockUser(creator.getUserId(), user.getUserId(), CHAT_ID, VALID_BLOCK_DURATION);
@@ -331,7 +337,7 @@ class ChatServiceTest {
             CHAT_ID);
         Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID,
             CHAT_ID);
-        Block block = Block.blockFor(BLOCK_ID, user.getId(), VALID_BLOCK_DURATION);
+        Block block = Block.blockFor(BLOCK_ID, user.getId(), LocalDateTime.now(), VALID_BLOCK_DURATION);
 
         given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
         given(participationRepository.findByUserIdAndChatId(eq(USER_ID), eq(CHAT_ID))).willReturn(
@@ -356,7 +362,7 @@ class ChatServiceTest {
         Chat chat = new Chat(CHAT_ID, USER_ID, "title");
         Participation blockedUser = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID,
             ANOTHER_USER_ID, chat.getId());
-        Block block = Block.blockFor(BLOCK_ID, blockedUser.getId(), 0);
+        Block block = Block.blockFor(BLOCK_ID, blockedUser.getId(), LocalDateTime.now(), 0);
 
         given(participationRepository.findByUserIdAndChatId(blockedUser.getUserId(),
             chat.getId())).willReturn(
@@ -381,7 +387,7 @@ class ChatServiceTest {
             CHAT_ID);
         Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID,
             CHAT_ID);
-        Block block = Block.blockFor(BLOCK_ID, user.getId(), VALID_BLOCK_DURATION);
+        Block block = Block.blockFor(BLOCK_ID, user.getId(), LocalDateTime.now(), VALID_BLOCK_DURATION);
 
         given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
         given(participationRepository.findByUserIdAndChatId(eq(USER_ID), eq(CHAT_ID))).willReturn(

@@ -25,15 +25,11 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@Sql("/clear-tables.sql")
 class ApiTest {
 
     @Autowired
     IdGenerator idGenerator;
-
-    @BeforeEach
-    @Sql("/clear-tables.sql")
-    void clearTables() {
-    }
 
     @Autowired
     private TestRestTemplate restTemplate;

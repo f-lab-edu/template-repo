@@ -26,10 +26,9 @@ public class Block {
 
     private boolean retracted;
 
-    public static Block blockFor(String id, String participationId, int durationInMin) {
+    public static Block blockFor(String id, String participationId, LocalDateTime now, int durationInMin) {
         validateDuration(durationInMin);
 
-        LocalDateTime now = LocalDateTime.now();
         LocalDateTime expiresAt;
         if (durationInMin == 0) { // 영구 차단
             expiresAt = TimeConstant.MAX_DATETIME;
