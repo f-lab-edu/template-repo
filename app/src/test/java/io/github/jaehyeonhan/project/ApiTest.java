@@ -15,6 +15,8 @@ import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -182,7 +184,6 @@ class ApiTest {
         chatService.join(userId, chatId);
         chatService.blockUser(creatorId, userId, chatId, 20);
 
-        // when
         SendMessageRequest request = new SendMessageRequest(userId, "message");
 
         // when
@@ -191,5 +192,26 @@ class ApiTest {
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {4, 31})
+    @DisplayName("올바르지 않은 차단 기간을 설정하면 400 응답을 반환한다")
+    void given_invalidBlockDuration_when_blockUser_then_return400(int duration) {
+        // given
+        String creatorId = idGenerator.generate();
+        String chatId = chatService.createChat(creatorId, "title");
+
+        String userId = idGenerator.generate();
+        chatService.join(userId, chatId);
+
+        BlockUserRequest request = new BlockUserRequest(creatorId, userId, duration);
+
+        // when
+        ResponseEntity<Void> response = restTemplate.postForEntity(
+            "/api/chats/" + chatId + "/blocks", request, Void.class);
+
+        // then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 }

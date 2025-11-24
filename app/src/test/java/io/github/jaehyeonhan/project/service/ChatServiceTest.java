@@ -1,16 +1,16 @@
 package io.github.jaehyeonhan.project.service;
 
-import static io.github.jaehyeonhan.project.service.ChatConst.ANOTHER_PARTICIPATION_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.ANOTHER_USER_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.BEGINNING_OF_TIME;
-import static io.github.jaehyeonhan.project.service.ChatConst.BLOCK_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.CHAT_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.MESSAGE_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.NON_EXISTENT_CHAT_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.PARTICIPATION_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.THE_OTHER_USER_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.USER_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.VALID_BLOCK_DURATION;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.ANOTHER_PARTICIPATION_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.ANOTHER_USER_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.BEGINNING_OF_TIME;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.BLOCK_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.CHAT_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.MESSAGE_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.NON_EXISTENT_CHAT_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.PARTICIPATION_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.THE_OTHER_USER_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.USER_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.VALID_BLOCK_DURATION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -140,7 +140,7 @@ class ChatServiceTest {
         Chat chat = new Chat(CHAT_ID, ANOTHER_USER_ID, "title");
         Participation participation = Participation.joinAsUser(PARTICIPATION_ID, USER_ID, CHAT_ID);
 
-        given(chatRepository.findById(ChatConst.CHAT_ID)).willReturn(Optional.of(chat));
+        given(chatRepository.findById(ChatTestConst.CHAT_ID)).willReturn(Optional.of(chat));
         given(participationRepository.findByUserIdAndChatId(USER_ID, CHAT_ID)).willReturn(
             Optional.empty(), Optional.of(participation));
         given(idGenerator.generate()).willReturn(PARTICIPATION_ID);

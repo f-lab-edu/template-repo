@@ -2,7 +2,7 @@ package io.github.jaehyeonhan.project.service;
 
 import java.time.LocalDateTime;
 
-public class ChatConst {
+public class ChatTestConst {
     static final LocalDateTime BEGINNING_OF_TIME = LocalDateTime.of(1, 1, 1, 0, 0);
 
     static final String USER_ID = "59832100-9bea-47c1-b048-69a27d698846";
@@ -19,4 +19,6 @@ public class ChatConst {
     static final int VALID_BLOCK_DURATION = 10;
 
     static final String MESSAGE_ID = "74f8bfb3-b19d-446c-8526-2bd0e2d85ad3";
+
+
 }

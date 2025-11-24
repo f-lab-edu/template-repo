@@ -1,14 +1,14 @@
 package io.github.jaehyeonhan.project.service;
 
-import static io.github.jaehyeonhan.project.service.ChatConst.ANOTHER_PARTICIPATION_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.ANOTHER_USER_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.BEGINNING_OF_TIME;
-import static io.github.jaehyeonhan.project.service.ChatConst.BLOCK_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.CHAT_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.NON_EXISTENT_CHAT_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.PARTICIPATION_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.USER_ID;
-import static io.github.jaehyeonhan.project.service.ChatConst.VALID_BLOCK_DURATION;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.ANOTHER_PARTICIPATION_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.ANOTHER_USER_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.BEGINNING_OF_TIME;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.BLOCK_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.CHAT_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.NON_EXISTENT_CHAT_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.PARTICIPATION_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.USER_ID;
+import static io.github.jaehyeonhan.project.service.ChatTestConst.VALID_BLOCK_DURATION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
