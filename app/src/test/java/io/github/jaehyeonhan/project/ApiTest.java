@@ -2,17 +2,21 @@ package io.github.jaehyeonhan.project;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.github.jaehyeonhan.project.controller.dto.request.BlockUserRequest;
 import io.github.jaehyeonhan.project.controller.dto.request.CreateChatRequest;
 import io.github.jaehyeonhan.project.controller.dto.request.JoinChatRequest;
 import io.github.jaehyeonhan.project.controller.dto.request.SendMessageRequest;
 import io.github.jaehyeonhan.project.controller.dto.response.ChatCreatedResponse;
 import io.github.jaehyeonhan.project.controller.dto.response.MessageListResponse;
 import io.github.jaehyeonhan.project.service.ChatService;
+import io.github.jaehyeonhan.project.service.IdGenerator;
 import java.net.URI;
 import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
@@ -23,12 +27,11 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@Sql("/clear-tables.sql")
 class ApiTest {
 
-    @BeforeEach
-    @Sql("/clear-tables.sql")
-    void clearTables() {
-    }
+    @Autowired
+    IdGenerator idGenerator;
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -105,5 +108,110 @@ class ApiTest {
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(Objects.requireNonNull(response.getBody()).getMessages().size()).isPositive();
+    }
+
+    @Test
+    @DisplayName("권한이 있는 사용자가 다른 참가자를 5-30분 사이 또는 영구 차단하면 200 상태코드를 반환한다.")
+    void given_authorizedUser_when_blockAnother_then_return200 () {
+        // given
+        String creatorId = idGenerator.generate();
+        String chatId = chatService.createChat(creatorId, "title");
+
+        String userId = idGenerator.generate();
+        chatService.join(userId, chatId);
+
+        BlockUserRequest request = new BlockUserRequest(creatorId, userId, 25);
+
+        // when
+        ResponseEntity<Void> response = restTemplate.postForEntity(
+            "/api/chats/" + chatId + "/blocks", request, Void.class);
+
+        // then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @DisplayName("차단 권한이 부족하면 403 상태코드를 반환한다.")
+    void given_unauthorizedUser_when_blockUser_then_return403 () {
+        // given
+        String creatorId = idGenerator.generate();
+        String chatId = chatService.createChat(creatorId, "title");
+
+        String user1Id = idGenerator.generate();
+        String user2Id = idGenerator.generate();
+        chatService.join(user1Id, chatId);
+        chatService.join(user2Id, chatId);
+
+        BlockUserRequest request = new BlockUserRequest(user1Id, user2Id, 25);
+
+        // when
+        ResponseEntity<String> response = restTemplate.postForEntity(
+            "/api/chats/" + chatId + "/blocks", request, String.class);
+
+        // then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @DisplayName("차단된 사용자를 재차단하면 409 상태코드를 반환한다.")
+    void given_blockedUser_whenBlockAgain_return409() {
+        // given
+        String creatorId = idGenerator.generate();
+        String chatId = chatService.createChat(creatorId, "title");
+
+        String userId = idGenerator.generate();
+        chatService.join(userId, chatId);
+        chatService.blockUser(creatorId, userId, chatId, 20);
+
+        BlockUserRequest request = new BlockUserRequest(creatorId, userId, 25);
+
+        // when
+        ResponseEntity<String> response = restTemplate.postForEntity(
+            "/api/chats/" + chatId + "/blocks", request, String.class);
+
+        // then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @DisplayName("차단된 사용자가 메시지를 전송하면 403 상태코드를 반환한다.")
+    void given_blockedUser_when_sendMessage_then_return403() {
+        // given
+        String creatorId = idGenerator.generate();
+        String chatId = chatService.createChat(creatorId, "title");
+
+        String userId = idGenerator.generate();
+        chatService.join(userId, chatId);
+        chatService.blockUser(creatorId, userId, chatId, 20);
+
+        SendMessageRequest request = new SendMessageRequest(userId, "message");
+
+        // when
+        ResponseEntity<Void> response = restTemplate.postForEntity(
+            "/api/chats/" + chatId + "/messages", request, Void.class);
+
+        // then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {4, 31})
+    @DisplayName("올바르지 않은 차단 기간을 설정하면 400 응답을 반환한다")
+    void given_invalidBlockDuration_when_blockUser_then_return400(int duration) {
+        // given
+        String creatorId = idGenerator.generate();
+        String chatId = chatService.createChat(creatorId, "title");
+
+        String userId = idGenerator.generate();
+        chatService.join(userId, chatId);
+
+        BlockUserRequest request = new BlockUserRequest(creatorId, userId, duration);
+
+        // when
+        ResponseEntity<Void> response = restTemplate.postForEntity(
+            "/api/chats/" + chatId + "/blocks", request, Void.class);
+
+        // then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 }

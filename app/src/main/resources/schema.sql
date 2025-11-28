@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS block;
 DROP TABLE IF EXISTS message;
 DROP TABLE IF EXISTS participation;
 DROP TABLE IF EXISTS chat;
@@ -28,5 +29,19 @@ CREATE TABLE participation
     user_id    VARCHAR(64) NOT NULL,
     chat_id    VARCHAR(64) NOT NULL,
     created_at TIMESTAMP   NOT NULL,
+    role       VARCHAR(15) NOT NULL,
     CONSTRAINT fk_participation_chat FOREIGN KEY (chat_id) REFERENCES chat (id)
 );
+
+-- block 테이블
+CREATE TABLE block
+(
+    id               VARCHAR(64) PRIMARY KEY,
+    participation_id VARCHAR(64) NOT NULL,
+    created_at       TIMESTAMP   NOT NULL,
+    expires_at       TIMESTAMP   NOT NULL,
+    retracted        BOOLEAN     NOT NULL,
+    CONSTRAINT fk_block_participation FOREIGN KEY (participation_id) REFERENCES participation (id)
+);
+
+CREATE INDEX participation_id_idx ON block(participation_id);

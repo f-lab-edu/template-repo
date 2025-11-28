@@ -25,12 +25,12 @@ public class Message {
 
     private LocalDateTime createdAt;
 
-    public Message(String id, String chatId, String userId, String content) {
+    public Message(String id, String chatId, String userId, String content, LocalDateTime now) {
         this.id = requireNonNull(id, "id");
         this.chatId = requireNonNull(chatId, "chat id");
         this.userId = requireNonNull(userId, "user id");
         this.content = requireNonNull(content, "content");
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = now;
 
         validateContent(content);
     }
