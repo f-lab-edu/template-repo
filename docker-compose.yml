@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build:
@@ -12,11 +10,12 @@ services:
     depends_on:
       - postgres
     networks:
-      - app-network
+      - appnet
+      - proxynet
 
   postgres:
     image: postgres:18.0
-    container_name: my-postgres
+    container_name: postgres
     env_file:
       - app/.env
     environment:
@@ -29,7 +28,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
     networks:
-      - app-network
+      - appnet
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 10s
@@ -41,5 +40,7 @@ volumes:
     driver: local
 
 networks:
-  app-network:
+  appnet:
     driver: bridge
+  proxynet:
+    external: true
