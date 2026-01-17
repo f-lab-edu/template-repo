@@ -1,0 +1,29 @@
+services:
+  cadvisor:
+    image: ghcr.io/google/cadvisor:0.55.0
+    hostname: cadvisor
+    volumes:
+      - "/:/rootfs:ro"
+      - "/var/run:/var/run:ro"
+      - "/sys:/sys:ro"
+      - "/var/lib/docker/:/var/lib/docker:ro"
+      - "/dev/disk/:/dev/disk:ro"
+    ports:
+      - "8081:8080"
+      
+  postgres:
+    image: postgres:18.0
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      TZ: Asia/Seoul
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
