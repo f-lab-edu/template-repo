@@ -1,3 +1,6 @@
+## 구성
+![architecture](./db_connection_test/images/arch.png)
+
 ## 설치 및 실행
 
 ### 도커(cAdvisor, PostgreSQL, Prometheus, Spring Boot)
