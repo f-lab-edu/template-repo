@@ -41,10 +41,10 @@ export const options = {
   scenarios: {
     rps_test: {
       executor: 'constant-arrival-rate',
-      rate: 1000,
+      rate: 150, // 목표 RPS 설정
       timeUnit: '1s',
-      duration: '60s',
-      preAllocatedVUs: 1400
+      duration: '30s',
+      preAllocatedVUs: 200
     }
   }
 };

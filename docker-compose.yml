@@ -4,43 +4,53 @@ services:
       context: .
       dockerfile: app/Dockerfile
     ports:
-      - "8080:8080"
-    env_file:
-      - app/.env
+      - 8080:8080
     depends_on:
-      - postgres
-    networks:
-      - appnet
-      - proxynet
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
 
   postgres:
     image: postgres:18.0
-    container_name: postgres
+    container_name: my_postgres # 변경 시 .ps1 파일 {name = ''} 부분 수정 필요
     env_file:
-      - app/.env
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      TZ: Asia/Seoul
+      - .env
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql
-    networks:
-      - appnet
+      - 5432:5432
+    command: ["-c", "max_connections=${POSTGRES_POOL_SIZE}"]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U myuser -d app"]
       interval: 10s
       timeout: 5s
       retries: 5
-
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    volumes:
+      - postgres_data:/var/lib/postgresql
+          
+  cadvisor:
+    image: ghcr.io/google/cadvisor:0.55.0
+    hostname: cadvisor
+    volumes:
+      - "/:/rootfs:ro"
+      - "/var/run:/var/run:ro"
+      - "/sys:/sys:ro"
+      - "/var/lib/docker/:/var/lib/docker:ro"
+      - "/dev/disk/:/dev/disk:ro"
+    ports:
+      - 8081:8080
+      
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./db_connection_test/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+      
 volumes:
   postgres_data:
     driver: local
-
-networks:
-  appnet:
-    driver: bridge
-  proxynet:
-    external: true

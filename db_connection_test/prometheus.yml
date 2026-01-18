@@ -4,16 +4,11 @@ global:
   # scrape_timeout is set to the global default (10s).
 
 scrape_configs:
-  - job_name: "prometheus"
-    static_configs:
-      - targets: ["localhost:9090"]
-        labels:
-          app: "prometheus"
   - job_name: "cadvisor"
     scrape_interval: 5s
     static_configs:
-      - targets: ["localhost:8081"]
+      - targets: ["cadvisor:8080"]
   - job_name: "app"
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['localhost:8080']
+      - targets: ['app:8080']

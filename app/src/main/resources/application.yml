@@ -1,15 +1,15 @@
 spring:
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: jdbc:postgresql://postgres:5432/app
+    username: myuser
+    password: mypassword
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 1000
+      maximum-pool-size: ${APP_CONNECTION_POOL_SIZE}
 
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: create
     show-sql: false
     properties:
       hibernate:
@@ -32,4 +32,6 @@ management:
 server:
   tomcat:
     threads:
-      max: 1000
+      max: ${APP_THREAD_POOL_SIZE}
+    mbeanregistry:
+      enabled: true # 이 설정이 있어야 Tomcat 상세 메트릭이 수집됩니다.

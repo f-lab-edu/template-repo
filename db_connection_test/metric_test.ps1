@@ -1,7 +1,7 @@
 function Get-CpuUsage ($START_TS, $END_TS) {
   $NUM_CORES = 2
   
-  $CPU_METRIC = "container_cpu_usage_seconds_total{name='desktop-postgres-1'}"
+  $CPU_METRIC = "container_cpu_usage_seconds_total{name='my_postgres'}"
   $CPU_QUERY = "$CPU_METRIC @ $END_TS - $CPU_METRIC @ $START_TS"
   $URI = "http://localhost:9090/api/v1/query?query=$([uri]::EscapeDataString($CPU_QUERY))"
   $CPU_RESPONSE = Invoke-RestMethod -Uri $URI
@@ -15,7 +15,7 @@ function Get-CpuUsage ($START_TS, $END_TS) {
 }
 
 function Get-MemoryUsage ($END_TS) {
-  $METRIC = "container_memory_usage_bytes{name='desktop-postgres-1'}"
+  $METRIC = "container_memory_usage_bytes{name='my_postgres'}"
   $QUERY = "$METRIC @ $END_TS"
   $URI = "http://localhost:9090/api/v1/query?query=$([uri]::EscapeDataString($QUERY))"
   $RESPONSE = Invoke-RestMethod -Uri $URI
@@ -24,7 +24,7 @@ function Get-MemoryUsage ($END_TS) {
 }
 
 function Get-WrittenMegaBytes ($START_TS, $END_TS) {
-  $METRIC = "container_fs_writes_bytes_total{name='desktop-postgres-1'}"
+  $METRIC = "container_fs_writes_bytes_total{name='my_postgres'}"
   $QUERY = "$METRIC @ $END_TS - $METRIC @ $START_TS"
   $URI = "http://localhost:9090/api/v1/query?query=$([uri]::EscapeDataString($QUERY))"
   $RESPONSE = Invoke-RestMethod -Uri $URI
