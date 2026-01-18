@@ -3,7 +3,7 @@
 ### 도커(cAdvisor, PostgreSQL, Prometheus, Spring Boot)
 루트 디렉토리에 있는 `template.env`의 값을 설정하고 파일명을 `.env`로 변경합니다.
 
-```
+```text
 APP_CONNECTION_POOL_SIZE=<커넥션 풀 크기>
 APP_THREAD_POOL_SIZE=<스레드 풀 크기>
 
@@ -34,7 +34,7 @@ docker compose up -d
 3. PostgreSQL 최대 커넥션 크기
    postgres 컨테이너 접속 후
    
-   ```
+   ```bash
    psql -U myuser -d app
    show max_connections;
    ```
@@ -50,7 +50,19 @@ docker compose up -d
 
 1. `.env` 및 `test.js` 설정
    `.env` 파일에서 커넥션 풀 및 스레드 풀을 설정합니다. 또한 `test.js`에서 최하단 `options` 객체의 `rate` 값(RPS)을 설정합니다.
-
+   ```javascript
+   export const options = {
+     scenarios: {
+       rps_test: {
+         executor: 'constant-arrival-rate',
+         rate: 150, // 목표 RPS 설정
+         timeUnit: '1s',
+         duration: '30s',
+         preAllocatedVUs: 200
+       }
+     }
+   };
+   ```
 2. 컨테이너 실행
    `docker compose up -d`를 통해 컨테이너를 실행합니다.
 
@@ -59,12 +71,12 @@ docker compose up -d
    
    PowerShell을 실행하고 스크립트가 있는 폴더로 이동한 뒤, 스크립트 파일을 실행합니다. 
    
-   ```PowerShell
+   ```powershell
    ./metric_test.ps1
    ```
    "cannot be loaded because running scripts is disabled on this system."와 같은 스크립트 실행 권한 오류가 발생하면 다음 명령으로 실행 권한을 설정해줍니다.
    
-   ```
+   ```powershell
    Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
    ```
    
