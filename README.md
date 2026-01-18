@@ -29,7 +29,7 @@ docker compose up -d
 2. 스레드 풀 크기
    `http://localhost:8080/actuator/prometheus`에서 `tomcat_threads_config_max_threads` 검색
 
-![스레드 풀 크기 확인](./db_connection_test/images/thread_pool.png)
+   ![스레드 풀 크기 확인](./db_connection_test/images/thread_pool.png)
 
 3. PostgreSQL 최대 커넥션 크기
    postgres 컨테이너 접속 후
