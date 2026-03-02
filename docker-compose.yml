@@ -6,9 +6,10 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - app/.env
+      - .env
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - appnet
       - proxynet
@@ -16,8 +17,6 @@ services:
   postgres:
     image: postgres:18.0
     container_name: postgres
-    env_file:
-      - app/.env
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -30,7 +29,7 @@ services:
     networks:
       - appnet
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
