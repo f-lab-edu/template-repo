@@ -1,10 +1,19 @@
 services:
-  app:
+  app1:
     build:
       context: .
       dockerfile: app/Dockerfile
-    ports:
-      - "8080:8080"
+    image: app-image:local
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - appnet
+      - proxynet
+  app2:
+    image: app-image:local
     env_file:
       - .env
     depends_on:

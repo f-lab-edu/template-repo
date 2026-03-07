@@ -3,7 +3,7 @@ DROP TABLE IF EXISTS participation;
 DROP TABLE IF EXISTS chat;
 
 -- chat 테이블
-CREATE TABLE chat
+CREATE IF NOT EXISTS TABLE chat
 (
     id         VARCHAR(64) PRIMARY KEY,
     creator_id VARCHAR(64)  NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE chat
 );
 
 -- message 테이블
-CREATE TABLE message
+CREATE IF NOT EXISTS TABLE message
 (
     id         VARCHAR(64) PRIMARY KEY,
     user_id    VARCHAR(64)  NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE message
 );
 
 -- participation 테이블
-CREATE TABLE participation
+CREATE IF NOT EXISTS TABLE participation
 (
     id         VARCHAR(64) PRIMARY KEY,
     user_id    VARCHAR(64) NOT NULL,
