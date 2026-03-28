@@ -16,7 +16,7 @@ POSTGRES_POOL_SIZE=<커넥션 풀 크기 + 5>
 # ...
 ```
    
-값을 지장한 뒤 Docker Desktop 실행 후 루트 디렉토리에서 컨테이너를 실행합니다.
+값을 저장한 뒤 Docker Desktop 실행 후 루트 디렉토리에서 컨테이너를 실행합니다.
 
 ```bash
 docker compose up -d
@@ -25,16 +25,19 @@ docker compose up -d
 각 설정값은 다음을 통해 확인할 수 있습니다.
 
 1. Hikari 커넥션 풀 크기
+   
    `http://localhost:8080/actuator/prometheus`에서 `hikaricp_connections` 검색
 
    ![Hikari 커넥션 풀 크기 확인](./db_connection_test/images/hikar_cp_connections.png)
 
-2. 스레드 풀 크기
+3. 스레드 풀 크기
+   
    `http://localhost:8080/actuator/prometheus`에서 `tomcat_threads_config_max_threads` 검색
 
    ![스레드 풀 크기 확인](./db_connection_test/images/thread_pool.png)
 
-3. PostgreSQL 최대 커넥션 크기
+4. PostgreSQL 최대 커넥션 크기
+   
    postgres 컨테이너 접속 후
    
    ```bash
@@ -52,6 +55,7 @@ docker compose up -d
 ## 테스트 진행
 
 1. `.env` 및 `test.js` 설정
+   
    `.env` 파일에서 커넥션 풀 및 스레드 풀을 설정합니다. 또한 `test.js`에서 최하단 `options` 객체의 `rate` 값(RPS)을 설정합니다.
    ```javascript
    export const options = {
@@ -66,10 +70,12 @@ docker compose up -d
      }
    };
    ```
-2. 컨테이너 실행
+3. 컨테이너 실행
+   
    `docker compose up -d`를 통해 컨테이너를 실행합니다.
 
-3. 스크립트 실행
+5. 스크립트 실행
+   
    윈도우의 경우 제공된 PowerShell 스크립트를 통해 결과를 한 번에 확인할 수 있습니다. 다만 환경에 따라 Prometheus 쿼리 결과의 형태가 다를 수 있어, 먼저 `localhost:9090`에 접속해 스크립트의 쿼리를 실행해보는 것을 권장합니다.
    
    PowerShell을 실행하고 스크립트가 있는 폴더로 이동한 뒤, 스크립트 파일을 실행합니다. 
@@ -90,5 +96,5 @@ docker compose up -d
    4. 5초 대기
    5. 시작 시각부터 종료 시각 +3초까지의 메트릭 측정
    
-4. 컨테이너 종료
+7. 컨테이너 종료
    `docker compose down -v`를 통해 환경을 초기화합니다.
