@@ -1,9 +1,11 @@
 spring:
   data:
     redis:
-      sentinel:
-        master: ${REDIS_SENTINEL_MASTER}
-        nodes: ${REDIS_SENTINEL_NODES}
+      host: localhost
+      port: 8666 # Toxiproxy
+#      sentinel:
+#        master: ${REDIS_SENTINEL_MASTER}
+#        nodes: ${REDIS_SENTINEL_NODES}
       timeout: ${REDIS_TIMEOUT:150ms}
       connect-timeout: ${REDIS_CONNECTION_TIMEOUT:100ms}
 
@@ -30,36 +32,53 @@ spring:
 
 resilience4j:
   circuitbreaker:
+    circuit-breaker-aspect-order: 1
     instances:
       participationCache:
         sliding-window-type: COUNT_BASED
-        sliding-window-size: 10
-        minimum-number-of-calls: 5
+        sliding-window-size: 5           # prod: 10
+        minimum-number-of-calls: 3       # prod: 5
         failure-rate-threshold: 50
         slow-call-duration-threshold: 2s
         slow-call-rate-threshold: 80
-        wait-duration-in-open-state: 30s
-        permitted-number-of-calls-in-half-open-state: 3
+        wait-duration-in-open-state: 10s # prod: 30s
+        permitted-number-of-calls-in-half-open-state: 2  # prod: 3
         automatic-transition-from-open-to-half-open-enabled: true
         record-exceptions:
           - org.springframework.data.redis.RedisConnectionFailureException
           - org.springframework.data.redis.RedisSystemException
       ignore-exceptions:
         - io.github.resilience4j.bulkhead.BulkheadFullException
-      circuit-breaker-aspect-order: 1
 
   retry:
+    retry-aspect-order: 2
     instances:
       participationCache:
         max-attempts: 3
-        wait-duration: 100ms
+        wait-duration: 50ms              # prod: 100ms
         retry-exceptions:
           - org.springframework.data.redis.RedisConnectionFailureException
           - org.springframework.data.redis.RedisSystemException
-    retry-aspect-order: 2
 
   bulkhead:
     instances:
       sendMessage:
-        max-concurrent-calls: 70
+        max-concurrent-calls: 1         # prod: 70
         max-wait-duration: 0ms
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,circuitbreakers,retries,bulkheads
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
+logging:
+  level:
+    io.github.resilience4j: DEBUG
+    io.github.jaehyeonhan.project: DEBUG

@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:18.0
+    container_name: postgres
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - appnet
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.12.0
+    ports:
+      - "8474:8474" # control API
+      - "8666:8666" # proxy port
+    networks:
+      - appnet
+      - redisnet
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  appnet:
+    driver: bridge
+  proxynet:
+    external: true
+  redisnet:
+    external: true
