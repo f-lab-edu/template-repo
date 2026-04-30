@@ -72,6 +72,6 @@ services:
       
 networks:
   redisnet:
-    driver: bridge
+    external: true
   proxynet:
     external: true

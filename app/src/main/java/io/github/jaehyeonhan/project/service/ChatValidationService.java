@@ -2,12 +2,12 @@ package io.github.jaehyeonhan.project.service;
 
 import io.github.jaehyeonhan.project.entity.Block;
 import io.github.jaehyeonhan.project.entity.Participation;
+import io.github.jaehyeonhan.project.entity.ParticipationCache;
 import io.github.jaehyeonhan.project.exception.AlreadyBlockedException;
 import io.github.jaehyeonhan.project.exception.ChatNotFoundException;
 import io.github.jaehyeonhan.project.exception.NotParticipatingException;
 import io.github.jaehyeonhan.project.repository.BlockRepository;
 import io.github.jaehyeonhan.project.repository.ChatRepository;
-import io.github.jaehyeonhan.project.repository.ParticipationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +20,7 @@ import java.util.Optional;
 public class ChatValidationService {
 
     private final ChatRepository chatRepository;
-    private final ParticipationRepository participationRepository;
+    private final ParticipationCacheService participationCacheService;
     private final BlockRepository blockRepository;
 
     private final Clock clock;
@@ -30,9 +30,11 @@ public class ChatValidationService {
     }
 
     public Participation requireParticipation(String userId, String chatId) {
-        return participationRepository.findByUserIdAndChatId(userId, chatId)
-            .orElseThrow(
-                () -> new NotParticipatingException("참여 중인 채팅이 아닙니다."));
+        ParticipationCache cache = participationCacheService.get(userId, chatId);
+        if (cache == null) {
+            throw new NotParticipatingException("참여 중인 채팅이 아닙니다.");
+        }
+        return cache.toParticipation(userId, chatId);
     }
 
     public void validateNotBlocked(String participationId) {

@@ -62,4 +62,15 @@ public class Participation {
     private boolean canPromoteToManager() {
         return this.role.equals(ParticipationRole.CREATOR);
     }
+
+    static Participation restoreFromCache(String id, String userId, String chatId,
+        ParticipationRole role, LocalDateTime createdAt) {
+        Participation p = new Participation();
+        p.id = id;
+        p.userId = userId;
+        p.chatId = chatId;
+        p.role = role;
+        p.createdAt = createdAt;
+        return p;
+    }
 }
