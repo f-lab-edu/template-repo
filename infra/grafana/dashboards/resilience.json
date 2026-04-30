@@ -1,0 +1,93 @@
+{
+  "title": "Resilience4j — Participation Cache",
+  "uid": "resilience-participation-cache",
+  "refresh": "2s",
+  "time": { "from": "now-5m", "to": "now" },
+  "schemaVersion": 38,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Circuit Breaker State",
+      "type": "state-timeline",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 5 },
+      "options": {
+        "mergeValues": true,
+        "showValue": "always",
+        "fillOpacity": 70
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "CLOSED",    "color": "green",  "index": 0 },
+                "1": { "text": "HALF_OPEN", "color": "yellow", "index": 1 },
+                "2": { "text": "OPEN",      "color": "red",    "index": 2 }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green",  "value": null },
+              { "color": "yellow", "value": 1    },
+              { "color": "red",    "value": 2    }
+            ]
+          },
+          "color": { "mode": "thresholds" }
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "sum without(state) (resilience4j_circuitbreaker_state{name=\"participationCache\", state=\"half_open\"} * 1) + sum without(state) (resilience4j_circuitbreaker_state{name=\"participationCache\", state=\"open\"} * 2)",
+          "legendFormat": "state"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Retry Calls per 30s",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 5, "w": 12, "h": 8 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "increase(resilience4j_retry_calls_total{name=\"participationCache\"}[30s])",
+          "legendFormat": "{{kind}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Fallback Calls per 30s",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 5, "w": 12, "h": 8 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "lineWidth": 2, "fillOpacity": 10 },
+          "color": { "fixedColor": "orange", "mode": "fixed" }
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "expr": "increase(participation_cache_fallback_total[30s])",
+          "legendFormat": "fallback"
+        }
+      ]
+    }
+  ]
+}

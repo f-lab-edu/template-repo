@@ -28,6 +28,7 @@ dependencies {
 
     // Actuator (메트릭 노출) — resilience4j-spring-boot3가 micrometer 브릿지를 포함함
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 

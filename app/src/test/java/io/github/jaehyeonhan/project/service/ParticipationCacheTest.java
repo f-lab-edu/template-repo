@@ -7,6 +7,7 @@ import io.github.jaehyeonhan.project.repository.ParticipationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -34,6 +35,9 @@ class ParticipationCacheTest {
 
     @Mock
     private RedisTemplate<String, ParticipationCache> participationRedisTemplate;
+
+    @Mock
+    private MeterRegistry meterRegistry;
 
     @Mock
     private ValueOperations<String, ParticipationCache> valueOperations;

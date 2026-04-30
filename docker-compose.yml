@@ -7,6 +7,9 @@ services:
       - "8080:8080"
     env_file:
       - .env
+    environment:
+      REDIS_SENTINEL_MASTER: mymaster
+      REDIS_SENTINEL_NODES: redis-master:26379,redis-replica1:26379,redis-replica2:26379
     depends_on:
       postgres:
         condition: service_healthy

@@ -1,11 +1,9 @@
 spring:
   data:
     redis:
-      host: localhost
-      port: 8666 # Toxiproxy
-#      sentinel:
-#        master: ${REDIS_SENTINEL_MASTER}
-#        nodes: ${REDIS_SENTINEL_NODES}
+      sentinel:
+        master: ${REDIS_SENTINEL_MASTER:mymaster}
+        nodes: ${REDIS_SENTINEL_NODES:localhost:26379,localhost:26380,localhost:26381}
       timeout: ${REDIS_TIMEOUT:150ms}
       connect-timeout: ${REDIS_CONNECTION_TIMEOUT:100ms}
 
@@ -47,6 +45,7 @@ resilience4j:
         record-exceptions:
           - org.springframework.data.redis.RedisConnectionFailureException
           - org.springframework.data.redis.RedisSystemException
+          - org.springframework.dao.QueryTimeoutException
       ignore-exceptions:
         - io.github.resilience4j.bulkhead.BulkheadFullException
 
@@ -59,6 +58,7 @@ resilience4j:
         retry-exceptions:
           - org.springframework.data.redis.RedisConnectionFailureException
           - org.springframework.data.redis.RedisSystemException
+          - org.springframework.dao.QueryTimeoutException
 
   bulkhead:
     instances:
@@ -70,7 +70,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,metrics,circuitbreakers,retries,bulkheads
+        include: health,metrics,circuitbreakers,retries,bulkheads,prometheus
   endpoint:
     health:
       show-details: always
