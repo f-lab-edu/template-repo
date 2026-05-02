@@ -7,6 +7,8 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.jaehyeonhan.project.entity.ParticipationCache;
 import io.github.jaehyeonhan.project.repository.ParticipationRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ public class ParticipationCacheService {
 
     private final ParticipationRepository participationRepository;
     private final RedisTemplate<String, ParticipationCache> participationRedisTemplate;
+    private final MeterRegistry meterRegistry;
 
     @CircuitBreaker(name = "participationCache", fallbackMethod = "getFallback")
     @Retry(name = "participationCache")
@@ -41,6 +44,10 @@ public class ParticipationCacheService {
 
     // Circuit Open — Redis를 건너뛰고 DB 직접 조회
     private ParticipationCache getFallback(String userId, String chatId, Throwable t) {
+        Counter.builder("participation_cache_fallback")
+            .description("Number of times the participation cache fallback was triggered")
+            .register(meterRegistry)
+            .increment();
         log.warn("participationCache fallback: cause={}", t.getMessage());
         return queryDb(userId, chatId);
     }
