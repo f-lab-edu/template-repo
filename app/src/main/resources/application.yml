@@ -44,6 +44,7 @@ resilience4j:
         record-exceptions:
           - org.springframework.data.redis.RedisConnectionFailureException
           - org.springframework.data.redis.RedisSystemException
+          - org.springframework.dao.QueryTimeoutException
       ignore-exceptions:
         - io.github.resilience4j.bulkhead.BulkheadFullException
       circuit-breaker-aspect-order: 1
@@ -56,6 +57,7 @@ resilience4j:
         retry-exceptions:
           - org.springframework.data.redis.RedisConnectionFailureException
           - org.springframework.data.redis.RedisSystemException
+          - org.springframework.dao.QueryTimeoutException
     retry-aspect-order: 2
 
   bulkhead:
