@@ -41,6 +41,14 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: admin
     networks:
       - appnet
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.12.0
+    ports:
+      - "8474:8474" # control API
+      - "8666:8666" # proxy port
+    networks:
+      - appnet
+      - redisnet
 
 volumes:
   postgres_data:

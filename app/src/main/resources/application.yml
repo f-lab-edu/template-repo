@@ -1,9 +1,11 @@
 spring:
   data:
     redis:
-      sentinel:
-        master: ${REDIS_SENTINEL_MASTER:mymaster}
-        nodes: ${REDIS_SENTINEL_NODES:localhost:26379,localhost:26380,localhost:26381}
+      host: toxiproxy
+      port: 8666
+#      sentinel:
+#        master: ${REDIS_SENTINEL_MASTER:mymaster}
+#        nodes: ${REDIS_SENTINEL_NODES:localhost:26379,localhost:26380,localhost:26381}
       timeout: ${REDIS_TIMEOUT:150ms}
       connect-timeout: ${REDIS_CONNECTION_TIMEOUT:100ms}
 
@@ -77,6 +79,10 @@ management:
   health:
     circuitbreakers:
       enabled: true
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
 
 logging:
   level:

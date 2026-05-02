@@ -18,6 +18,8 @@ services:
       - ./redis/sentinel.conf:/etc/redis/sentinel.conf
     networks:
       - redisnet
+    cap_add:
+      - NET_ADMIN
       
   redis-replica1:
     image: redis:latest
