@@ -30,6 +30,7 @@ spring:
 
 resilience4j:
   circuitbreaker:
+    circuit-breaker-aspect-order: 1
     instances:
       participationCache:
         sliding-window-type: COUNT_BASED
@@ -47,9 +48,9 @@ resilience4j:
           - org.springframework.dao.QueryTimeoutException
       ignore-exceptions:
         - io.github.resilience4j.bulkhead.BulkheadFullException
-      circuit-breaker-aspect-order: 1
 
   retry:
+    retry-aspect-order: 2
     instances:
       participationCache:
         max-attempts: 3
@@ -58,7 +59,6 @@ resilience4j:
           - org.springframework.data.redis.RedisConnectionFailureException
           - org.springframework.data.redis.RedisSystemException
           - org.springframework.dao.QueryTimeoutException
-    retry-aspect-order: 2
 
   bulkhead:
     instances:
