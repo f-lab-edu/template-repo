@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(./gradlew test *)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(Get-ChildItem -Path \"D:\\\\MyThings\\\\Study\\\\PersonalStudy\\\\WebProgramming\\\\f-lab\\\\live-commerce\" -Recurse -Filter \"*.java\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(./gradlew.bat test *)"
     ]
   },
   "prefersReducedMotion": false

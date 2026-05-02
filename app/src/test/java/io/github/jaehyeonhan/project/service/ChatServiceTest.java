@@ -250,8 +250,8 @@ class ChatServiceTest {
         Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
         Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
 
-        given(chatValidationService.requireParticipation(eq(USER_ID), eq(CHAT_ID))).willReturn(creator);
-        given(chatValidationService.requireParticipation(eq(ANOTHER_USER_ID), eq(CHAT_ID))).willReturn(user);
+        given(chatValidationService.requireParticipation(USER_ID, CHAT_ID)).willReturn(creator);
+        given(chatValidationService.requireParticipation(ANOTHER_USER_ID, CHAT_ID)).willReturn(user);
 
         // when, then
         assertThatThrownBy(() -> {
@@ -269,8 +269,8 @@ class ChatServiceTest {
         String manager2ParticipationId = "449388e5-1544-48cc-91e0-8c2363713236";
         Participation manager2 = getManager(creator, manager2ParticipationId, THE_OTHER_USER_ID);
 
-        given(chatValidationService.requireParticipation(eq(ANOTHER_USER_ID), eq(CHAT_ID))).willReturn(manager1);
-        given(chatValidationService.requireParticipation(eq(THE_OTHER_USER_ID), eq(CHAT_ID))).willReturn(manager2);
+        given(chatValidationService.requireParticipation(ANOTHER_USER_ID, CHAT_ID)).willReturn(manager1);
+        given(chatValidationService.requireParticipation(THE_OTHER_USER_ID, CHAT_ID)).willReturn(manager2);
 
         // when, then
         assertThatThrownBy(
@@ -286,8 +286,8 @@ class ChatServiceTest {
         Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
         Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
 
-        given(chatValidationService.requireParticipation(eq(USER_ID), eq(CHAT_ID))).willReturn(creator);
-        given(chatValidationService.requireParticipation(eq(ANOTHER_USER_ID), eq(CHAT_ID))).willReturn(user);
+        given(chatValidationService.requireParticipation(USER_ID, CHAT_ID)).willReturn(creator);
+        given(chatValidationService.requireParticipation(ANOTHER_USER_ID, CHAT_ID)).willReturn(user);
 
         // when, then
         assertThatThrownBy(() -> {
@@ -302,15 +302,15 @@ class ChatServiceTest {
         Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
         Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
 
-        given(chatValidationService.requireParticipation(eq(USER_ID), eq(CHAT_ID))).willReturn(creator);
-        given(chatValidationService.requireParticipation(eq(ANOTHER_USER_ID), eq(CHAT_ID))).willReturn(user);
+        given(chatValidationService.requireParticipation(USER_ID, CHAT_ID)).willReturn(creator);
+        given(chatValidationService.requireParticipation(ANOTHER_USER_ID, CHAT_ID)).willReturn(user);
         willThrow(new AlreadyBlockedException("차단된 사용자입니다."))
             .given(chatValidationService).validateNotBlocked(user.getId());
 
         // when, then
         assertThatThrownBy(() -> {
             chatService.blockUser(creator.getUserId(), user.getUserId(), CHAT_ID, VALID_BLOCK_DURATION);
-        });
+        }).isInstanceOf(AlreadyBlockedException.class);
     }
 
     @Test
@@ -338,8 +338,8 @@ class ChatServiceTest {
         Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
         Block block = Block.blockFor(BLOCK_ID, user.getId(), LocalDateTime.now(), VALID_BLOCK_DURATION);
 
-        given(chatValidationService.requireParticipation(eq(USER_ID), eq(CHAT_ID))).willReturn(creator);
-        given(chatValidationService.requireParticipation(eq(ANOTHER_USER_ID), eq(CHAT_ID))).willReturn(user);
+        given(chatValidationService.requireParticipation(USER_ID, CHAT_ID)).willReturn(creator);
+        given(chatValidationService.requireParticipation(ANOTHER_USER_ID, CHAT_ID)).willReturn(user);
         given(blockRepository.findActiveBlockByParticipationId(eq(user.getId()), any(LocalDateTime.class)))
             .willReturn(Optional.of(block));
 
@@ -358,8 +358,8 @@ class ChatServiceTest {
         Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
         Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
 
-        given(chatValidationService.requireParticipation(eq(USER_ID), eq(CHAT_ID))).willReturn(creator);
-        given(chatValidationService.requireParticipation(eq(ANOTHER_USER_ID), eq(CHAT_ID))).willReturn(user);
+        given(chatValidationService.requireParticipation(USER_ID, CHAT_ID)).willReturn(creator);
+        given(chatValidationService.requireParticipation(ANOTHER_USER_ID, CHAT_ID)).willReturn(user);
         given(blockRepository.findActiveBlockByParticipationId(eq(user.getId()), any(LocalDateTime.class)))
             .willReturn(Optional.empty());
 
@@ -376,8 +376,8 @@ class ChatServiceTest {
         Participation user1 = Participation.joinAsUser(PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
         Participation user2 = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, THE_OTHER_USER_ID, CHAT_ID);
 
-        given(chatValidationService.requireParticipation(eq(user1.getUserId()), eq(CHAT_ID))).willReturn(user1);
-        given(chatValidationService.requireParticipation(eq(user2.getUserId()), eq(CHAT_ID))).willReturn(user2);
+        given(chatValidationService.requireParticipation(user1.getUserId(), CHAT_ID)).willReturn(user1);
+        given(chatValidationService.requireParticipation(user2.getUserId(), CHAT_ID)).willReturn(user2);
 
         // when, then
         assertThatThrownBy(() -> {

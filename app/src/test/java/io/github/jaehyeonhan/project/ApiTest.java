@@ -1,7 +1,5 @@
 package io.github.jaehyeonhan.project;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import io.github.jaehyeonhan.project.controller.dto.request.BlockUserRequest;
 import io.github.jaehyeonhan.project.controller.dto.request.CreateChatRequest;
 import io.github.jaehyeonhan.project.controller.dto.request.JoinChatRequest;
@@ -10,9 +8,6 @@ import io.github.jaehyeonhan.project.controller.dto.response.ChatCreatedResponse
 import io.github.jaehyeonhan.project.controller.dto.response.MessageListResponse;
 import io.github.jaehyeonhan.project.service.ChatService;
 import io.github.jaehyeonhan.project.service.IdGenerator;
-import java.net.URI;
-import java.util.Objects;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -25,6 +20,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
+import java.util.Objects;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Sql("/clear-tables.sql")
@@ -107,7 +107,7 @@ class ApiTest {
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(Objects.requireNonNull(response.getBody()).getMessages().size()).isPositive();
+        assertThat(Objects.requireNonNull(response.getBody()).getMessages()).isNotEmpty();
     }
 
     @Test

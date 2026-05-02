@@ -38,7 +38,7 @@ import org.springframework.test.context.jdbc.Sql;
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Sql("/clear-tables.sql")
-public class ChatServiceIntegrationTest {
+class ChatServiceIntegrationTest {
 
     @Autowired
     private ChatService chatService;
