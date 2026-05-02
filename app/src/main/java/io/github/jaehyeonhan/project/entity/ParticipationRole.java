@@ -16,6 +16,6 @@ public enum ParticipationRole {
     }
 
     public boolean canUnblock(ParticipationRole other) {
-        return this.level > other.level;
+        return canBlock(other);
     }
 }

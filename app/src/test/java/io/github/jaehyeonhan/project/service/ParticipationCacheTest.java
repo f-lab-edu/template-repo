@@ -4,11 +4,11 @@ import io.github.jaehyeonhan.project.entity.Participation;
 import io.github.jaehyeonhan.project.entity.ParticipationCache;
 import io.github.jaehyeonhan.project.entity.ParticipationRole;
 import io.github.jaehyeonhan.project.repository.ParticipationRepository;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -38,11 +38,12 @@ class ParticipationCacheTest {
     @Mock
     private ValueOperations<String, ParticipationCache> valueOperations;
 
-    @InjectMocks
     private ParticipationCacheService participationCacheService;
 
     @BeforeEach
     void setUp() {
+        participationCacheService = new ParticipationCacheService(
+            participationRepository, participationRedisTemplate, new SimpleMeterRegistry());
         given(participationRedisTemplate.opsForValue()).willReturn(valueOperations);
     }
 

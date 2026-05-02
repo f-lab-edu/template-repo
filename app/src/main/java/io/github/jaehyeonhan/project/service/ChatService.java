@@ -4,7 +4,11 @@ import io.github.jaehyeonhan.project.entity.Block;
 import io.github.jaehyeonhan.project.entity.Chat;
 import io.github.jaehyeonhan.project.entity.Message;
 import io.github.jaehyeonhan.project.entity.Participation;
-import io.github.jaehyeonhan.project.exception.*;
+import io.github.jaehyeonhan.project.exception.AlreadyBlockedException;
+import io.github.jaehyeonhan.project.exception.NotBlockedException;
+import io.github.jaehyeonhan.project.exception.UnauthorizedBlockException;
+import io.github.jaehyeonhan.project.exception.UnauthorizedSendMessageException;
+import io.github.jaehyeonhan.project.exception.UnauthorizedUnblockException;
 import io.github.jaehyeonhan.project.repository.BlockRepository;
 import io.github.jaehyeonhan.project.repository.ChatRepository;
 import io.github.jaehyeonhan.project.repository.MessageRepository;
@@ -41,12 +45,13 @@ public class ChatService {
         chatRepository.save(chat);
 
         String participationId = idGenerator.generate();
-        Participation participation = Participation.joinAsCreator(participationId, userId, chatId);
+        Participation participation = Participation.joinAsCreator(participationId, userId, chatId, clock);
         participationRepository.save(participation);
 
         return chat.getId();
     }
 
+    @Transactional
     public void join(String userId, String chatId) {
         chatValidationService.requireChat(chatId);
 
@@ -56,11 +61,12 @@ public class ChatService {
         }
 
         String participationId = idGenerator.generate();
-        Participation participation = Participation.joinAsUser(participationId, userId, chatId);
+        Participation participation = Participation.joinAsUser(participationId, userId, chatId, clock);
         participationRepository.save(participation);
     }
 
     @Bulkhead(name = "sendMessage", type = Type.SEMAPHORE)
+    @Transactional
     public void sendMessage(String userId, String chatId, String content) {
         Participation participation = chatValidationService.requireParticipation(userId, chatId);
 
@@ -75,6 +81,7 @@ public class ChatService {
         messageRepository.save(message);
     }
 
+    @Transactional(readOnly = true)
     public List<MessageDto> getMessageList(String userId, String chatId, LocalDateTime lastRead) {
         chatValidationService.requireParticipation(userId, chatId);
 
@@ -83,6 +90,7 @@ public class ChatService {
                                 .toList();
     }
 
+    @Transactional
     public void blockUser(String actorUserId, String targetUserId, String chatId,
         int durationInMin) {
         chatValidationService.requireChat(chatId);
@@ -100,6 +108,7 @@ public class ChatService {
         blockRepository.save(block);
     }
 
+    @Transactional
     public void unblockUser(String actorUserId, String targetUserId, String chatId) {
         chatValidationService.requireChat(chatId);
         Participation actor = chatValidationService.requireParticipation(actorUserId, chatId);

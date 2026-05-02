@@ -5,6 +5,7 @@ import static io.github.jaehyeonhan.project.util.ValidationUtils.requireNonNull;
 import io.github.jaehyeonhan.project.exception.UnauthorizedPromotionException;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -28,19 +29,27 @@ public class Participation {
     private LocalDateTime createdAt;
 
     public static Participation joinAsUser(String id, String userId, String chatId) {
-        return new Participation(id, userId, chatId, ParticipationRole.USER);
+        return new Participation(id, userId, chatId, ParticipationRole.USER, Clock.systemDefaultZone());
+    }
+
+    public static Participation joinAsUser(String id, String userId, String chatId, Clock clock) {
+        return new Participation(id, userId, chatId, ParticipationRole.USER, clock);
     }
 
     public static Participation joinAsCreator(String id, String userId, String chatId) {
-        return new Participation(id, userId, chatId, ParticipationRole.CREATOR);
+        return new Participation(id, userId, chatId, ParticipationRole.CREATOR, Clock.systemDefaultZone());
     }
 
-    private Participation(String id, String userId, String chatId, ParticipationRole role) {
+    public static Participation joinAsCreator(String id, String userId, String chatId, Clock clock) {
+        return new Participation(id, userId, chatId, ParticipationRole.CREATOR, clock);
+    }
+
+    private Participation(String id, String userId, String chatId, ParticipationRole role, Clock clock) {
         this.id = requireNonNull(id, "id");
         this.userId = requireNonNull(userId, "user id");
         this.chatId = requireNonNull(chatId, "chat id");
         this.role = requireNonNull(role, "role");
-        createdAt = LocalDateTime.now();
+        createdAt = LocalDateTime.now(clock);
     }
 
     public boolean canBlock(Participation target) {
