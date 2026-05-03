@@ -7,6 +7,7 @@
 
 # Ignore env file
 .env
+*.env
 
 # Claude files
 .claude/
