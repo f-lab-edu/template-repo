@@ -4,17 +4,17 @@ local function check_if_allowed(keys, args)
     local bucket_size = tonumber(redis.call("GET", "rate_limit:config:bucket_size"))
     local refill_rate = tonumber(redis.call("GET", "rate_limit:config:refill_rate"))
 
-    local user_id = args[1] -- cluster 적용 시 keys로 변경해야 함
+    local user_id = args[1]
     local t = redis.call("TIME")
     local now_sec = tonumber(t[1])
 
     -- 현재 토큰 개수 조회 및 token 변수 갱신
-    local tokens_key = "rate_limit:user:" .. user_id .. ":tokens" -- cluster 적용 시 hashtag 적용 필요
+    local tokens_key = "rate_limit:user:" .. user_id .. ":tokens"
     local tokens = tonumber(redis.call("GET", tokens_key))
     if tokens == nil then tokens = bucket_size end
 
     -- 마지막 충전 시각 조회
-    local ts_key = "rate_limit:user:" .. user_id .. ":last_refill" -- cluster 적용 시 hashtag 적용 필요
+    local ts_key = "rate_limit:user:" .. user_id .. ":last_refill"
     local last = tonumber(redis.call("GET", ts_key))
     if not last then 
         last = now_sec 
