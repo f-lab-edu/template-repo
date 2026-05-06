@@ -36,6 +36,9 @@ public class Message {
     }
 
     private void validateContent(String content) {
+        if (content.isBlank()) {
+            throw new InvalidMessageContentException("Message cannot be blank");
+        }
         if (content.length() > 300) {
             throw new InvalidMessageContentException("Message cannot be longer than 300 characters");
         }

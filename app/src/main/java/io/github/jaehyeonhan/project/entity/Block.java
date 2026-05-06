@@ -43,7 +43,7 @@ public class Block {
         LocalDateTime expiresAt,
         boolean retracted) {
         this.id = requireNonNull(id, "Block id");
-        this.participationId = requireNonNull(participationId, "Participation id");;
+        this.participationId = requireNonNull(participationId, "Participation id");
         this.createdAt = requireNonNull(createdAt, "Created at");
         this.expiresAt = requireNonNull(expiresAt, "Expires at");
         this.retracted = retracted;
@@ -52,7 +52,7 @@ public class Block {
     private static void validateDuration(int durationInMin) {
         if ((durationInMin < 5 && durationInMin != 0) || durationInMin > 30) {
             throw new InvalidBlockDurationException(
-                "block duartion should be between 5 and 30 minutes");
+                "block duration should be between 5 and 30 minutes");
         }
     }
 

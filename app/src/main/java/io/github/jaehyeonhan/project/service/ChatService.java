@@ -5,9 +5,7 @@ import io.github.jaehyeonhan.project.entity.Chat;
 import io.github.jaehyeonhan.project.entity.Message;
 import io.github.jaehyeonhan.project.entity.Participation;
 import io.github.jaehyeonhan.project.exception.AlreadyBlockedException;
-import io.github.jaehyeonhan.project.exception.ChatNotFoundException;
 import io.github.jaehyeonhan.project.exception.NotBlockedException;
-import io.github.jaehyeonhan.project.exception.NotParticipatingException;
 import io.github.jaehyeonhan.project.exception.UnauthorizedBlockException;
 import io.github.jaehyeonhan.project.exception.UnauthorizedSendMessageException;
 import io.github.jaehyeonhan.project.exception.UnauthorizedUnblockException;
@@ -16,17 +14,21 @@ import io.github.jaehyeonhan.project.repository.ChatRepository;
 import io.github.jaehyeonhan.project.repository.MessageRepository;
 import io.github.jaehyeonhan.project.repository.ParticipationRepository;
 import io.github.jaehyeonhan.project.service.dto.MessageDto;
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead.Type;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ChatService {
+
+    private final ChatValidationService chatValidationService;
 
     private final ChatRepository chatRepository;
     private final ParticipationRepository participationRepository;
@@ -43,36 +45,33 @@ public class ChatService {
         chatRepository.save(chat);
 
         String participationId = idGenerator.generate();
-        Participation participation = Participation.joinAsCreator(participationId, userId, chatId);
+        Participation participation = Participation.joinAsCreator(participationId, userId, chatId, clock);
         participationRepository.save(participation);
 
         return chat.getId();
     }
 
+    @Transactional
     public void join(String userId, String chatId) {
-        requireChat(chatId);
+        chatValidationService.requireChat(chatId);
 
         // 중복 참가 요청은 바로 반환
-        Optional<Participation> optParticipation = participationRepository.findByUserIdAndChatId(
-            userId, chatId);
-        if (optParticipation.isPresent()) {
+        if (participationRepository.existsByUserIdAndChatId(userId, chatId)) {
             return;
         }
 
         String participationId = idGenerator.generate();
-        Participation participation = Participation.joinAsUser(participationId, userId, chatId);
+        Participation participation = Participation.joinAsUser(participationId, userId, chatId, clock);
         participationRepository.save(participation);
     }
 
-    private void requireChat(String chatId) {
-        chatRepository.findById(chatId).orElseThrow(() -> new ChatNotFoundException("채팅이 없습니다."));
-    }
-
+    @Bulkhead(name = "sendMessage", type = Type.SEMAPHORE)
+    @Transactional
     public void sendMessage(String userId, String chatId, String content) {
-        Participation participation = requireParticipation(userId, chatId);
+        Participation participation = chatValidationService.requireParticipation(userId, chatId);
 
         try {
-            validateNotBlocked(participation.getId());
+            chatValidationService.validateNotBlocked(participation.getId());
         } catch (AlreadyBlockedException e) {
             throw new UnauthorizedSendMessageException("차단되어 메시지를 전송할 수 없습니다.");
         }
@@ -82,41 +81,38 @@ public class ChatService {
         messageRepository.save(message);
     }
 
+    @Transactional(readOnly = true)
     public List<MessageDto> getMessageList(String userId, String chatId, LocalDateTime lastRead) {
-        requireParticipation(userId, chatId);
+        chatValidationService.requireParticipation(userId, chatId);
 
         return messageRepository.findMessagesAfterLastRead(chatId, lastRead).stream()
                                 .map(MessageDto::from)
                                 .toList();
     }
 
-    private Participation requireParticipation(String userId, String chatId) {
-        return participationRepository.findByUserIdAndChatId(userId, chatId)
-                                      .orElseThrow(
-                                          () -> new NotParticipatingException("참여 중인 채팅이 아닙니다."));
-    }
-
+    @Transactional
     public void blockUser(String actorUserId, String targetUserId, String chatId,
         int durationInMin) {
-        requireChat(chatId);
-        Participation actor = requireParticipation(actorUserId, chatId);
-        Participation target = requireParticipation(targetUserId, chatId);
+        chatValidationService.requireChat(chatId);
+        Participation actor = chatValidationService.requireParticipation(actorUserId, chatId);
+        Participation target = chatValidationService.requireParticipation(targetUserId, chatId);
 
         if (!actor.canBlock(target)) {
             throw new UnauthorizedBlockException("차단 권한이 없습니다.");
         }
 
-        validateNotBlocked(target.getId());
+        chatValidationService.validateNotBlocked(target.getId());
 
         String blockId = idGenerator.generate();
         Block block = Block.blockFor(blockId, target.getId(), LocalDateTime.now(clock), durationInMin);
         blockRepository.save(block);
     }
 
+    @Transactional
     public void unblockUser(String actorUserId, String targetUserId, String chatId) {
-        requireChat(chatId);
-        Participation actor = requireParticipation(actorUserId, chatId);
-        Participation target = requireParticipation(targetUserId, chatId);
+        chatValidationService.requireChat(chatId);
+        Participation actor = chatValidationService.requireParticipation(actorUserId, chatId);
+        Participation target = chatValidationService.requireParticipation(targetUserId, chatId);
 
         if (!actor.canUnblock(target)) {
             throw new UnauthorizedUnblockException("차단 해제 권한이 없습니다.");
@@ -127,13 +123,5 @@ public class ChatService {
                                      .orElseThrow(() -> new NotBlockedException("차단 상태가 아닙니다."));
         block.retract();
         blockRepository.save(block);
-    }
-
-    private void validateNotBlocked(String participationId) {
-        Optional<Block> optionalBlock = blockRepository.findActiveBlockByParticipationId(
-            participationId, LocalDateTime.now(clock));
-        if (optionalBlock.isPresent()) {
-            throw new AlreadyBlockedException("차단된 사용자입니다.");
-        }
     }
 }

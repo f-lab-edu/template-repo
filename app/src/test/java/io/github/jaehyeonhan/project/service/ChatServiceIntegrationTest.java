@@ -16,6 +16,7 @@ import io.github.jaehyeonhan.project.entity.Block;
 import io.github.jaehyeonhan.project.entity.Chat;
 import io.github.jaehyeonhan.project.entity.Message;
 import io.github.jaehyeonhan.project.entity.Participation;
+import io.github.jaehyeonhan.project.entity.ParticipationCache;
 import io.github.jaehyeonhan.project.entity.ParticipationRole;
 import io.github.jaehyeonhan.project.exception.ChatNotFoundException;
 import io.github.jaehyeonhan.project.exception.InvalidChatTitleException;
@@ -27,18 +28,24 @@ import io.github.jaehyeonhan.project.repository.ParticipationRepository;
 import io.github.jaehyeonhan.project.service.dto.MessageDto;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import io.github.jaehyeonhan.project.config.RedisTestContainerConfig;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.jdbc.Sql;
 
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Sql("/clear-tables.sql")
-public class ChatServiceIntegrationTest {
+@Import(RedisTestContainerConfig.class)
+class ChatServiceIntegrationTest {
 
     @Autowired
     private ChatService chatService;
@@ -54,6 +61,17 @@ public class ChatServiceIntegrationTest {
 
     @Autowired
     private BlockRepository blockRepository;
+
+    @Autowired
+    private RedisTemplate<String, ParticipationCache> participationRedisTemplate;
+
+    @BeforeEach
+    void clearRedisCache() {
+        Set<String> keys = participationRedisTemplate.keys("app:participation:*");
+        if (keys != null && !keys.isEmpty()) {
+            participationRedisTemplate.delete(keys);
+        }
+    }
 
     @Test
     @DisplayName("채팅 정상 생성 시 chat이 생성되고, 요청자가 참가자로 추가된다.")

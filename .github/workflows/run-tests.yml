@@ -3,6 +3,7 @@ name: Run Tests with Testcontainers
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
   test:

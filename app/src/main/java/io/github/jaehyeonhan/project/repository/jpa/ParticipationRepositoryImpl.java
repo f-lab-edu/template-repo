@@ -21,4 +21,9 @@ public class ParticipationRepositoryImpl implements ParticipationRepository {
     public Optional<Participation> findByUserIdAndChatId(String userId, String chatId) {
         return jpaParticipationRepository.findByUserIdAndChatId(userId, chatId);
     }
+
+    @Override
+    public boolean existsByUserIdAndChatId(String userId, String chatId) {
+        return jpaParticipationRepository.existsByUserIdAndChatId(userId, chatId);
+    }
 }

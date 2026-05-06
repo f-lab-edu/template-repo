@@ -17,13 +17,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import io.github.jaehyeonhan.project.entity.Block;
-import io.github.jaehyeonhan.project.entity.Chat;
 import io.github.jaehyeonhan.project.entity.Message;
 import io.github.jaehyeonhan.project.entity.Participation;
+import io.github.jaehyeonhan.project.entity.Chat;
+import io.github.jaehyeonhan.project.exception.AlreadyBlockedException;
 import io.github.jaehyeonhan.project.exception.ChatNotFoundException;
 import io.github.jaehyeonhan.project.exception.InvalidBlockDurationException;
 import io.github.jaehyeonhan.project.exception.InvalidChatTitleException;
@@ -56,6 +58,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ChatServiceTest {
 
     @Mock
+    private ChatValidationService chatValidationService;
+
+    @Mock
     private ChatRepository chatRepository;
 
     @Mock
@@ -86,8 +91,7 @@ class ChatServiceTest {
     void given_title_when_create_then_createChatAndRequesterJoinsChatAndReturnsChatId() {
         // given
         Chat chat = new Chat(CHAT_ID, USER_ID, "test");
-        Participation participation = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID,
-            CHAT_ID);
+        Participation participation = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
 
         given(idGenerator.generate()).willReturn(CHAT_ID, PARTICIPATION_ID);
         given(chatRepository.save(any(Chat.class))).willReturn(chat);
@@ -117,12 +121,9 @@ class ChatServiceTest {
     @DisplayName("채팅이 존재하고 처음 참가 시 채팅에 참가한다.")
     void given_chatExistsAndNotJoined_when_join_then_userJoinsChat() {
         // given
-        Chat chat = new Chat(CHAT_ID, ANOTHER_USER_ID, "title");
         Participation participation = Participation.joinAsUser(PARTICIPATION_ID, USER_ID, CHAT_ID);
 
-        given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
-        given(participationRepository.findByUserIdAndChatId(USER_ID, CHAT_ID)).willReturn(
-            Optional.empty());
+        given(participationRepository.existsByUserIdAndChatId(USER_ID, CHAT_ID)).willReturn(false);
         given(idGenerator.generate()).willReturn(PARTICIPATION_ID);
         given(participationRepository.save(any(Participation.class))).willReturn(participation);
 
@@ -137,12 +138,9 @@ class ChatServiceTest {
     @DisplayName("채팅에 중복으로 참여해도 참여 기록은 한 번만 생성된다.")
     void given_chatExists_when_joinParticipatingChat_then_oneParticipationIsCreated() {
         // given
-        Chat chat = new Chat(CHAT_ID, ANOTHER_USER_ID, "title");
         Participation participation = Participation.joinAsUser(PARTICIPATION_ID, USER_ID, CHAT_ID);
 
-        given(chatRepository.findById(ChatTestConst.CHAT_ID)).willReturn(Optional.of(chat));
-        given(participationRepository.findByUserIdAndChatId(USER_ID, CHAT_ID)).willReturn(
-            Optional.empty(), Optional.of(participation));
+        given(participationRepository.existsByUserIdAndChatId(USER_ID, CHAT_ID)).willReturn(false, true);
         given(idGenerator.generate()).willReturn(PARTICIPATION_ID);
         given(participationRepository.save(any(Participation.class))).willReturn(participation);
 
@@ -158,7 +156,8 @@ class ChatServiceTest {
     @DisplayName("존재하지 않는 채팅에 참여할 시 예외가 발생한다.")
     void given_chatNotExists_when_join_then_throwException() {
         // given
-        given(chatRepository.findById(NON_EXISTENT_CHAT_ID)).willReturn(Optional.empty());
+        willThrow(new ChatNotFoundException("채팅이 없습니다."))
+            .given(chatValidationService).requireChat(NON_EXISTENT_CHAT_ID);
 
         // when, then
         assertThatThrownBy(() -> chatService.join(USER_ID, NON_EXISTENT_CHAT_ID))
@@ -170,11 +169,9 @@ class ChatServiceTest {
     void given_userJoinedChat_when_sendMessage_then_messageIsSaved() {
         // given
         Message message = new Message(MESSAGE_ID, CHAT_ID, USER_ID, "content", LocalDateTime.now());
-        Participation participation = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID,
-            CHAT_ID);
+        Participation participation = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
 
-        given(participationRepository.findByUserIdAndChatId(USER_ID, CHAT_ID)).willReturn(
-            Optional.of(participation));
+        given(chatValidationService.requireParticipation(USER_ID, CHAT_ID)).willReturn(participation);
         given(idGenerator.generate()).willReturn(MESSAGE_ID);
         given(messageRepository.save(any(Message.class))).willReturn(message);
 
@@ -189,8 +186,8 @@ class ChatServiceTest {
     @DisplayName("참여하지 않은 채팅에 메시지 전송 시 예외가 발생한다.")
     void given_userNotJoinedChat_when_sendMessage_then_throwException() {
         // given
-        given(participationRepository.findByUserIdAndChatId(USER_ID,
-            CHAT_ID)).willReturn(Optional.empty());
+        given(chatValidationService.requireParticipation(USER_ID, CHAT_ID))
+            .willThrow(new NotParticipatingException("참여 중인 채팅이 아닙니다."));
 
         // when, then
         assertThatThrownBy(() -> chatService.sendMessage(USER_ID, CHAT_ID, "content"))
@@ -201,18 +198,14 @@ class ChatServiceTest {
     @DisplayName("참여한 채팅의 새 메시지 조회 시 메시지를 응답한다.")
     void given_userJoinedChat_when_getNewMessage_then_messageListIsReturned() {
         // given
-        Participation participation = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID,
-            CHAT_ID);
+        Participation participation = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
         Message message = new Message(MESSAGE_ID, CHAT_ID, USER_ID, "content", LocalDateTime.now());
 
-        given(participationRepository.findByUserIdAndChatId(USER_ID, CHAT_ID)).willReturn(
-            Optional.of(participation));
-        given(messageRepository.findMessagesAfterLastRead(CHAT_ID,
-            BEGINNING_OF_TIME)).willReturn(List.of(message));
+        given(chatValidationService.requireParticipation(USER_ID, CHAT_ID)).willReturn(participation);
+        given(messageRepository.findMessagesAfterLastRead(CHAT_ID, BEGINNING_OF_TIME)).willReturn(List.of(message));
 
         // when
-        List<MessageDto> newMessageList = chatService.getMessageList(USER_ID, CHAT_ID,
-            BEGINNING_OF_TIME);
+        List<MessageDto> newMessageList = chatService.getMessageList(USER_ID, CHAT_ID, BEGINNING_OF_TIME);
 
         // then
         assertThat(newMessageList).anyMatch(d -> d.getId().equals(MESSAGE_ID));
@@ -222,8 +215,8 @@ class ChatServiceTest {
     @DisplayName("참여하지 않은 채팅의 새 메시지 조회 시 예외가 발생한다.")
     void given_userNotJoinedChat_when_getNewMessage_then_throwException() {
         // given
-        given(participationRepository.findByUserIdAndChatId(USER_ID, CHAT_ID)).willReturn(
-            Optional.empty());
+        given(chatValidationService.requireParticipation(USER_ID, CHAT_ID))
+            .willThrow(new NotParticipatingException("참여 중인 채팅이 아닙니다."));
 
         // when, then
         assertThatThrownBy(() -> chatService.getMessageList(USER_ID, CHAT_ID, BEGINNING_OF_TIME))
@@ -235,16 +228,11 @@ class ChatServiceTest {
     void given_chatCreatorAndManager_when_blockUser_then_userIsBlocked() {
         // given
         ArgumentCaptor<Block> captor = ArgumentCaptor.forClass(Block.class);
-        Chat chat = new Chat(CHAT_ID, USER_ID, "title");
-        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID,
-            CHAT_ID);
-        Participation user = Participation.joinAsUser(PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
+        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
+        Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
 
-        given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
-        given(participationRepository.findByUserIdAndChatId(eq(USER_ID), eq(CHAT_ID))).willReturn(
-            Optional.of(creator));
-        given(participationRepository.findByUserIdAndChatId(eq(ANOTHER_USER_ID),
-            eq(CHAT_ID))).willReturn(Optional.of(user));
+        given(chatValidationService.requireParticipation((USER_ID), (CHAT_ID))).willReturn(creator);
+        given(chatValidationService.requireParticipation((ANOTHER_USER_ID), (CHAT_ID))).willReturn(user);
         given(idGenerator.generate()).willReturn(BLOCK_ID);
 
         // when
@@ -259,22 +247,15 @@ class ChatServiceTest {
     @DisplayName("일반 참가자는 다른 참가자의 메시지 전송을 차단할 수 없다.")
     void given_user_when_blocksOthers_then_throwException() {
         // given
-        Chat chat = new Chat(CHAT_ID, USER_ID, "title");
-        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID,
-            CHAT_ID);
-        Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID,
-            CHAT_ID);
+        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
+        Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
 
-        given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
-        given(participationRepository.findByUserIdAndChatId(eq(USER_ID), eq(CHAT_ID))).willReturn(
-            Optional.of(creator));
-        given(participationRepository.findByUserIdAndChatId(eq(ANOTHER_USER_ID),
-            eq(CHAT_ID))).willReturn(Optional.of(user));
+        given(chatValidationService.requireParticipation(USER_ID, CHAT_ID)).willReturn(creator);
+        given(chatValidationService.requireParticipation(ANOTHER_USER_ID, CHAT_ID)).willReturn(user);
 
         // when, then
         assertThatThrownBy(() -> {
-            chatService.blockUser(user.getUserId(), creator.getUserId(), CHAT_ID,
-                VALID_BLOCK_DURATION);
+            chatService.blockUser(user.getUserId(), creator.getUserId(), CHAT_ID, VALID_BLOCK_DURATION);
         }).isInstanceOf(UnauthorizedBlockException.class);
     }
 
@@ -282,25 +263,18 @@ class ChatServiceTest {
     @DisplayName("관리자는 서로의 메시지 전송을 차단할 수 없다.")
     void given_chatManager_when_blockEachOther_then_throwException() {
         // given
-        Chat chat = new Chat(CHAT_ID, USER_ID, "title");
-        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID,
-            CHAT_ID);
+        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
         String manager1ParticipationId = "619da13e-8564-43b1-9913-fbabfe6c61c1";
         Participation manager1 = getManager(creator, manager1ParticipationId, ANOTHER_USER_ID);
         String manager2ParticipationId = "449388e5-1544-48cc-91e0-8c2363713236";
         Participation manager2 = getManager(creator, manager2ParticipationId, THE_OTHER_USER_ID);
 
-        given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
-        given(participationRepository.findByUserIdAndChatId(eq(ANOTHER_USER_ID),
-            eq(CHAT_ID))).willReturn(
-            Optional.of(manager1));
-        given(participationRepository.findByUserIdAndChatId(eq(THE_OTHER_USER_ID),
-            eq(CHAT_ID))).willReturn(Optional.of(manager2));
+        given(chatValidationService.requireParticipation(ANOTHER_USER_ID, CHAT_ID)).willReturn(manager1);
+        given(chatValidationService.requireParticipation(THE_OTHER_USER_ID, CHAT_ID)).willReturn(manager2);
 
         // when, then
         assertThatThrownBy(
-            () -> chatService.blockUser(manager1.getUserId(), manager2.getUserId(), chat.getId(),
-                VALID_BLOCK_DURATION))
+            () -> chatService.blockUser(manager1.getUserId(), manager2.getUserId(), CHAT_ID, VALID_BLOCK_DURATION))
             .isInstanceOf(UnauthorizedBlockException.class);
     }
 
@@ -309,22 +283,15 @@ class ChatServiceTest {
     @DisplayName("일시 차단은 5분 이상 30분 이하만 가능하다.")
     void whenBlockDurationOutOfRange_thenThrowException(int duration) {
         // given
-        Chat chat = new Chat(CHAT_ID, USER_ID, "title");
-        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID,
-            CHAT_ID);
-        Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID,
-            CHAT_ID);
+        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
+        Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
 
-        given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
-        given(participationRepository.findByUserIdAndChatId(eq(USER_ID), eq(CHAT_ID))).willReturn(
-            Optional.of(creator));
-        given(participationRepository.findByUserIdAndChatId(eq(ANOTHER_USER_ID),
-            eq(CHAT_ID))).willReturn(Optional.of(user));
-        given(idGenerator.generate()).willReturn(BLOCK_ID);
+        given(chatValidationService.requireParticipation(USER_ID, CHAT_ID)).willReturn(creator);
+        given(chatValidationService.requireParticipation(ANOTHER_USER_ID, CHAT_ID)).willReturn(user);
 
         // when, then
         assertThatThrownBy(() -> {
-            chatService.blockUser(creator.getUserId(), user.getUserId(), chat.getId(), duration);
+            chatService.blockUser(creator.getUserId(), user.getUserId(), CHAT_ID, duration);
         }).isInstanceOf(InvalidBlockDurationException.class);
     }
 
@@ -332,48 +299,33 @@ class ChatServiceTest {
     @DisplayName("차단 상태의 사용자를 다시 차단할 수 없다.")
     void when_blockAlreadyBlockedUser_then_throwException() {
         // given
-        Chat chat = new Chat(CHAT_ID, USER_ID, "title");
-        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID,
-            CHAT_ID);
-        Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID,
-            CHAT_ID);
-        Block block = Block.blockFor(BLOCK_ID, user.getId(), LocalDateTime.now(), VALID_BLOCK_DURATION);
+        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
+        Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
 
-        given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
-        given(participationRepository.findByUserIdAndChatId(eq(USER_ID), eq(CHAT_ID))).willReturn(
-            Optional.of(creator));
-        given(participationRepository.findByUserIdAndChatId(eq(ANOTHER_USER_ID),
-            eq(CHAT_ID))).willReturn(Optional.of(user));
-        given(blockRepository.findActiveBlockByParticipationId(user.getId(),
-            LocalDateTime.now())).willReturn(
-            Optional.of(block));
+        given(chatValidationService.requireParticipation(USER_ID, CHAT_ID)).willReturn(creator);
+        given(chatValidationService.requireParticipation(ANOTHER_USER_ID, CHAT_ID)).willReturn(user);
+        willThrow(new AlreadyBlockedException("차단된 사용자입니다."))
+            .given(chatValidationService).validateNotBlocked(user.getId());
 
         // when, then
         assertThatThrownBy(() -> {
-            chatService.blockUser(creator.getUserId(), user.getUserId(), chat.getId(),
-                VALID_BLOCK_DURATION);
-        });
+            chatService.blockUser(creator.getUserId(), user.getUserId(), CHAT_ID, VALID_BLOCK_DURATION);
+        }).isInstanceOf(AlreadyBlockedException.class);
     }
 
     @Test
     @DisplayName("차단된 사용자는 메시지를 전송할 수 없다.")
     void given_blockedUser_when_sendMessage_then_throwException() {
         // given
-        Chat chat = new Chat(CHAT_ID, USER_ID, "title");
-        Participation blockedUser = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID,
-            ANOTHER_USER_ID, chat.getId());
-        Block block = Block.blockFor(BLOCK_ID, blockedUser.getId(), LocalDateTime.now(), 0);
+        Participation blockedUser = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
 
-        given(participationRepository.findByUserIdAndChatId(blockedUser.getUserId(),
-            chat.getId())).willReturn(
-            Optional.of(blockedUser));
-        given(blockRepository.findActiveBlockByParticipationId(eq(blockedUser.getId()),
-            any(LocalDateTime.class))).willReturn(
-            Optional.of(block));
+        given(chatValidationService.requireParticipation(blockedUser.getUserId(), CHAT_ID)).willReturn(blockedUser);
+        willThrow(new AlreadyBlockedException("차단된 사용자입니다."))
+            .given(chatValidationService).validateNotBlocked(blockedUser.getId());
 
         // when, then
         assertThatThrownBy(() -> {
-            chatService.sendMessage(blockedUser.getUserId(), chat.getId(), "message");
+            chatService.sendMessage(blockedUser.getUserId(), CHAT_ID, "message");
         }).isInstanceOf(UnauthorizedSendMessageException.class);
     }
 
@@ -382,25 +334,17 @@ class ChatServiceTest {
     void given_blockedUser_when_unblock_then_retractBlock() {
         // given
         ArgumentCaptor<Block> captor = ArgumentCaptor.forClass(Block.class);
-        Chat chat = new Chat(CHAT_ID, USER_ID, "title");
-        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID,
-            CHAT_ID);
-        Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID,
-            CHAT_ID);
+        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
+        Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
         Block block = Block.blockFor(BLOCK_ID, user.getId(), LocalDateTime.now(), VALID_BLOCK_DURATION);
 
-        given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
-        given(participationRepository.findByUserIdAndChatId(eq(USER_ID), eq(CHAT_ID))).willReturn(
-            Optional.of(creator));
-        given(participationRepository.findByUserIdAndChatId(eq(ANOTHER_USER_ID),
-            eq(CHAT_ID))).willReturn(Optional.of(user));
-        given(blockRepository.findActiveBlockByParticipationId(eq(user.getId()),
-            any(LocalDateTime.class))).willReturn(
-            Optional.of(
-                block)); // fixme: potential regression not verifying calling LocalDateTime.now()
+        given(chatValidationService.requireParticipation(USER_ID, CHAT_ID)).willReturn(creator);
+        given(chatValidationService.requireParticipation(ANOTHER_USER_ID, CHAT_ID)).willReturn(user);
+        given(blockRepository.findActiveBlockByParticipationId(eq(user.getId()), any(LocalDateTime.class)))
+            .willReturn(Optional.of(block));
 
         // when
-        chatService.unblockUser(creator.getUserId(), user.getUserId(), chat.getId());
+        chatService.unblockUser(creator.getUserId(), user.getUserId(), CHAT_ID);
 
         // then
         then(blockRepository).should().save(captor.capture());
@@ -411,23 +355,17 @@ class ChatServiceTest {
     @DisplayName("차단되지 않은 참가자를 차단 해제할 수 없다.")
     void given_notBlockedUser_when_unblock_then_throwException() {
         // given
-        Chat chat = new Chat(CHAT_ID, USER_ID, "title");
-        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID,
-            CHAT_ID);
-        Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID,
-            CHAT_ID);
+        Participation creator = Participation.joinAsCreator(PARTICIPATION_ID, USER_ID, CHAT_ID);
+        Participation user = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
 
-        given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
-        given(participationRepository.findByUserIdAndChatId(eq(USER_ID), eq(CHAT_ID))).willReturn(
-            Optional.of(creator));
-        given(participationRepository.findByUserIdAndChatId(eq(ANOTHER_USER_ID),
-            eq(CHAT_ID))).willReturn(Optional.of(user));
-        given(blockRepository.findActiveBlockByParticipationId(eq(user.getId()),
-            any(LocalDateTime.class))).willReturn(Optional.empty());
+        given(chatValidationService.requireParticipation(USER_ID, CHAT_ID)).willReturn(creator);
+        given(chatValidationService.requireParticipation(ANOTHER_USER_ID, CHAT_ID)).willReturn(user);
+        given(blockRepository.findActiveBlockByParticipationId(eq(user.getId()), any(LocalDateTime.class)))
+            .willReturn(Optional.empty());
 
         // when, then
         assertThatThrownBy(() -> {
-            chatService.unblockUser(creator.getUserId(), user.getUserId(), chat.getId());
+            chatService.unblockUser(creator.getUserId(), user.getUserId(), CHAT_ID);
         }).isInstanceOf(NotBlockedException.class);
     }
 
@@ -435,28 +373,20 @@ class ChatServiceTest {
     @DisplayName("일반 참가자는 다른 참가자의 차단을 해제할 수 없다")
     void given_notAuthorizedUser_when_unblock_then_throwException() {
         // given
-        Chat chat = new Chat(CHAT_ID, USER_ID, "title");
-        Participation user1 = Participation.joinAsUser(PARTICIPATION_ID, ANOTHER_USER_ID,
-            CHAT_ID);
-        Participation user2 = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, THE_OTHER_USER_ID,
-            CHAT_ID);
+        Participation user1 = Participation.joinAsUser(PARTICIPATION_ID, ANOTHER_USER_ID, CHAT_ID);
+        Participation user2 = Participation.joinAsUser(ANOTHER_PARTICIPATION_ID, THE_OTHER_USER_ID, CHAT_ID);
 
-        given(chatRepository.findById(CHAT_ID)).willReturn(Optional.of(chat));
-        given(participationRepository.findByUserIdAndChatId(eq(user1.getUserId()),
-            eq(chat.getId()))).willReturn(
-            Optional.of(user1));
-        given(participationRepository.findByUserIdAndChatId(eq(user2.getUserId()),
-            eq(chat.getId()))).willReturn(Optional.of(user2));
+        given(chatValidationService.requireParticipation(user1.getUserId(), CHAT_ID)).willReturn(user1);
+        given(chatValidationService.requireParticipation(user2.getUserId(), CHAT_ID)).willReturn(user2);
 
         // when, then
         assertThatThrownBy(() -> {
-            chatService.unblockUser(user1.getUserId(), user2.getUserId(), chat.getId());
+            chatService.unblockUser(user1.getUserId(), user2.getUserId(), CHAT_ID);
         }).isInstanceOf(UnauthorizedUnblockException.class);
     }
 
     private Participation getManager(Participation creator, String participationId, String userId) {
-        Participation manager = Participation.joinAsUser(participationId, userId,
-            creator.getChatId());
+        Participation manager = Participation.joinAsUser(participationId, userId, creator.getChatId());
         creator.promoteToManager(manager);
         return manager;
     }
